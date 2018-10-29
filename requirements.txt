@@ -1,0 +1,4 @@
+requests==2.20.0
+protobuf==3.6.1
+websocket_client==0.53.0
+google.cloud

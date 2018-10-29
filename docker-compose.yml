@@ -1,0 +1,17 @@
+version: '2.1'
+services:
+  socket_reader:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    networks:
+      - zf-net
+    depends_on:
+      - rabbit
+    environment:
+      - APP_ENV=${ZF_INTEGRATION_APP_ENV}
+    volumes:
+      - ./tmp/datalake/:/datalake/
+      - .:/app/
+    command: sh -c "python3 /app/app/socker_reader/main.py"
