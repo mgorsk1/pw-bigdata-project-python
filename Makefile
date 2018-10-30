@@ -1,4 +1,4 @@
-PROJECT_ID=pw-bigdata-project-final
+PROJECT_ID=pw-bigdata-project
 SA_NAME=pubsub-all-meetup
 
 setup-env:
@@ -23,11 +23,13 @@ setup-env:
 	gcloud pubsub topics create meetup-rawdata
 	gcloud pubsub topics create meetup-notify
 
-	#function create
+register-function:
+	gcloud config set project ${PROJECT_ID}
+
 	gcloud beta functions deploy \
 		pushover_notify \
-		--env-vars-file D:\Media\Documents\Programming\Python\pw_bigdata_project_utils\app\gcp_functions\pushover_notify\env.yml \
-		--source D:\Media\Documents\Programming\Python\pw_bigdata_project_utils\app\gcp_functions\pushover_notify \
+		--env-vars-file ./app/gcp_functions/pushover_notify/.env.yml \
+		--source ./app/gcp_functions/pushover_notify \
 		--runtime python37 \
 		--trigger-topic meetup-notify
 
