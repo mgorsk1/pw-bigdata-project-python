@@ -16,7 +16,7 @@ setup-env:
 
 	# keys generation
 	gcloud iam service-accounts keys create \
-		D:\Media\Documents\Programming\Python\pw_bigdata_project_utils\config\keys\gcp.json \
+		./config/keys/gcp.json \
 		--iam-account ${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com
 
 	# pubsub setup
