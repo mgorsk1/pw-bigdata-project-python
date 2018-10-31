@@ -1,0 +1,67 @@
+{
+  "index_patterns": [
+    "meetup-rawdata*"
+  ],
+  "settings": {
+    "index": {
+      "number_of_shards": 2,
+      "number_of_replicas": 1
+    }
+  },
+  "mappings": {
+    "default": {
+      "dynamic_templates": [
+        {
+          "date_by_value": {
+            "match_mapping_type": "date",
+            "mapping": {
+              "type": "date"
+            }
+          }
+        },
+        {
+          "date_by_name": {
+            "match_mapping_type": "string",
+            "match":   "*time",
+            "mapping": {
+              "type": "date"
+            }
+          }
+        },
+        {
+          "geo_by_name": {
+            "match_mapping_type": "string",
+            "match":   "*_geo",
+            "mapping": {
+              "type": "geo_point"
+            }
+          }
+        },
+        {
+          "doubles_by_type_double": {
+            "match_mapping_type": "double",
+            "mapping": {
+              "type": "double"
+            }
+          }
+        },
+        {
+          "doubles_by_type_long": {
+            "match_mapping_type": "long",
+            "mapping": {
+              "type": "double"
+            }
+          }
+        },
+        {
+          "strings": {
+            "match_mapping_type": "string",
+            "mapping": {
+              "type": "keyword"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
