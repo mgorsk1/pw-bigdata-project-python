@@ -1,10 +1,16 @@
 PROJECT_ID=pw-bigdata-project
 SA_NAME=pubsub-all-meetup
 
-setup-env:
+ELASTICSEARCH_URL=localhost
+ELASTICSEARCH_PORT=9201
+
+project-setup:
 	# project setup
-	gcloud projects create ${PROJECT_ID}
-	gcloud config set project ${PROJECT_ID}
+	gcloud projects create ${PROJECT_NAME}
+	gcloud config set project ${PROJECT_NAME}
+
+accounts-setup:
+	gcloud config set project ${PROJECT_NAME}
 
 	# accounts setup
 	gcloud iam service-accounts create ${SA_NAME} --display-name "${SA_NAME}"
@@ -32,6 +38,22 @@ register-function:
 		--source ./app/gcp_functions/pushover_notify \
 		--runtime python37 \
 		--trigger-topic meetup-notify
+
+setup-gcp-env: project-setup accounts-setup keys-generate pubsub-setup function-register
+
+setup-elk-env:
+	docker-compose up -d elastic
+	docker-compose up -d kibana
+
+	docker restart $$(docker ps -aq --filter "label=com.gorskimariusz.project=${PROJECT_NAME}")
+
+	until curl -XGET 'http://${ELASTICSEARCH_URL}:${ELASTICSEARCH_PORT}/_cluster/health?pretty' 2>&1 | grep status | egrep "(green|yellow)"; do \
+		echo "---------- Waiting for Elasticsearch to start... ----------" && sleep 1;\
+	done
+
+	curl -X PUT 'http://${ELASTICSEARCH_URL}:${ELASTICSEARCH_PORT}/_snapshot/gcp_backup' \
+		-H 'Content-Type: application/json' \
+		-d @./resources/elasticsearch/gcp_backup_snapshot_repository.json
 
 run-socket-reader:
 	python3 ./app/socket_reader/main.py

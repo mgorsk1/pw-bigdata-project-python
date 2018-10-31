@@ -1,0 +1,1 @@
+0 1 * * * curl -X PUT 'http://localhost:9200/_snapshot/gcp_backup/%3Cmeetup-%7Bnow%2Fd%7D%3E' >/dev/null 2>&1

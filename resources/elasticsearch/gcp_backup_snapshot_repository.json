@@ -1,0 +1,6 @@
+{
+  "type": "gcs",
+  "settings": {
+    "bucket": "elasticsearch-meetup-backup"
+  }
+}

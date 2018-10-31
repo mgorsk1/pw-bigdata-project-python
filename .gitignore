@@ -115,4 +115,4 @@ venv.bak/
 
 /tmp/**
 
-/config/keys/gcp/key.json
+/**/key.json

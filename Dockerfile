@@ -1,7 +1,7 @@
 FROM python:3.6-alpine
 MAINTAINER gorskimariusz13@gmail.com
 
-LABEL "com.gorskimariusz.project"="pw.bigdata.project.final"
+LABEL "com.gorskimariusz.project"="pw-bd-project"
 
 # Set the working directory
 RUN mkdir /app
