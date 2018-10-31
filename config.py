@@ -2,5 +2,5 @@ import os
 
 BASE_PATH = os.path.dirname(__file__)
 
-PROJECT_ID = ''
-TOPIC_NAME = 'meetup-rsvp-raw'
+PROJECT_ID = 'pw-bd-project'
+TOPIC_NAME = 'meetup-rawdata'
