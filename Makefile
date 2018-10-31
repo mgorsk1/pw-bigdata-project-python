@@ -1,4 +1,4 @@
-PROJECT_ID=pw-bigdata-project
+PROJECT_NAME=pw-bd-project
 SA_NAME=pubsub-all-meetup
 
 ELASTICSEARCH_URL=localhost
@@ -14,23 +14,39 @@ accounts-setup:
 
 	# accounts setup
 	gcloud iam service-accounts create ${SA_NAME} --display-name "${SA_NAME}"
+
 	gcloud projects add-iam-policy-binding \
-		${PROJECT_ID} \
-		--member serviceAccount:${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com \
-		--role roles/pubsub.publisher \
+		${PROJECT_NAME} \
+		--member serviceAccount:${SA_NAME}@${PROJECT_NAME}.iam.gserviceaccount.com \
+		--role roles/pubsub.publisher
+
+	gcloud projects add-iam-policy-binding \
+		${PROJECT_NAME} \
+		--member serviceAccount:${SA_NAME}@${PROJECT_NAME}.iam.gserviceaccount.com \
 		--role roles/pubsub.subscriber
+
+keys-generate:
+	gcloud config set project ${PROJECT_NAME}
+
+	rm -f ./config/keys/gcp/key.json
 
 	# keys generation
 	gcloud iam service-accounts keys create \
-		./config/keys/gcp.json \
-		--iam-account ${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com
+		./config/keys/gcp/key.json \
+		--iam-account ${SA_NAME}@${PROJECT_NAME}.iam.gserviceaccount.com
+
+pubsub-setup:
+	gcloud config set project ${PROJECT_NAME}
 
 	# pubsub setup
 	gcloud pubsub topics create meetup-rawdata
 	gcloud pubsub topics create meetup-notify
 
-register-function:
-	gcloud config set project ${PROJECT_ID}
+	gcloud pubsub subscriptions create meetup-rawdata-subscription-elastic --topic meetup-rawdata
+	gcloud pubsub subscriptions create meetup-rawdata-subscription-streaming --topic meetup-rawdata
+
+function-register:
+	gcloud config set project ${PROJECT_NAME}
 
 	gcloud beta functions deploy \
 		pushover_notify \
