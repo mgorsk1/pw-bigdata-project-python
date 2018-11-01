@@ -24,6 +24,8 @@ services:
       - pw-bd-net
     ports:
       - "5602:5601"
+    volumes:
+    - ./resources/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
 
 networks:
   pw-bd-net:
