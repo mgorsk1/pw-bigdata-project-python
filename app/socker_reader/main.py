@@ -49,9 +49,9 @@ class WebsocketToPubSubEmitter:
                 print("Running for {} seconds...".format(self.seconds))
                 sleep(self.seconds)
                 self.ws.close()
-                print("Published {} messages in {} seconds. That is {} mps!".format(self.counter,
-                                                                                    self.seconds,
-                                                                                    self.counter/self.seconds))
+                print("Published {} messages in {} seconds. That is {:.2f} mps!".format(self.counter,
+                                                                                        self.seconds,
+                                                                                        self.counter/self.seconds))
 
             else:
                 print("Running forever...")
