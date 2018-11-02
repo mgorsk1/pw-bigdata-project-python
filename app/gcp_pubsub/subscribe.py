@@ -60,23 +60,12 @@ class PubSubSubscriber:
 
     @staticmethod
     def struct_message(message_arg, encoding='utf-8'):
-        if isinstance(message_arg, bytes):
-            message_tmp = message_arg.decode(encoding)
-
-            try:
-                message = loads(loads(message_tmp))
-            except JSONDecodeError:
-                message = None
-
-        elif isinstance(message_arg, str):
-            try:
-                message = loads(message_arg)
-            except JSONDecodeError:
-                message = None
-
-        elif isinstance(message_arg, dict):
+        if isinstance(message_arg, dict):
             message = message_arg
-
+        elif isinstance(message_arg, bytes):
+            message = PubSubSubscriber.message_to_dict(message_arg.decode(encoding))
+        elif isinstance(message_arg, str):
+            message = PubSubSubscriber.message_to_dict(message_arg)
         else:
             message = None
 
@@ -121,7 +110,21 @@ class PubSubSubscriber:
     @staticmethod
     def create_geo_object(lat, lon):
         return "{}, {}".format(str(lat), str(lon))
-                
+
+    @staticmethod
+    def message_to_dict(message_arg):
+        keep_going = True
+        result = message_arg
+
+        while keep_going and (not isinstance(result, dict)):
+            try:
+                result = loads(result)
+            except JSONDecodeError:
+                result = None
+                keep_going = False
+
+        return result
+
 
 def main(project, topic, seconds=None):
     pss = PubSubSubscriber(project, topic, seconds)
