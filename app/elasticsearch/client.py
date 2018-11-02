@@ -12,7 +12,7 @@ class ElasticDailyIndexManager(Thread):
     def __init__(self, index_basename):
         Thread.__init__(self)
 
-        es_port = 9200 if bool(getenv("RUNNING_IN_CONTAINER", "False")) else 9201
+        es_port = 9200 if ElasticDailyIndexManager.str_to_bool(getenv("RUNNING_IN_CONTAINER", "False")) else 9201
         es_url = "elastic" if bool(getenv("RUNNING_IN_CONTAINER", "False")) else "localhost"
 
         self.es = Elasticsearch(hosts=[es_url], port=es_port)
@@ -121,3 +121,12 @@ class ElasticDailyIndexManager(Thread):
         result.update(metadata)
 
         return result
+
+    @staticmethod
+    def str_to_bool(str_arg):
+        if str_arg.lower() == 'true':
+            return True
+        elif str_arg.lower() == 'false':
+            return False
+        else:
+            return None
