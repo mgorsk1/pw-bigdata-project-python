@@ -33,12 +33,11 @@ class ElasticDailyIndexManager(Thread):
 
                 yield self._prepare_bulk_doc(message_body, **metadata)
 
-        bulk_load = helpers.streaming_bulk(self.es, generator(), 10)
+        bulk_load = helpers.streaming_bulk(self.es, generator(), 10, yield_ok=False)
 
         while True:
             for success, info in bulk_load:
-                # @todo print on error
-                pass
+                print(success, info)
 
     def index_document(self, document_body, id=None):
         document_body['@timestamp'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
