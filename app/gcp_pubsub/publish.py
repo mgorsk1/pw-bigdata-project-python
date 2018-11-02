@@ -65,9 +65,15 @@ class PubSubPublisher:
 
 def main(project, topic):
     psp = PubSubPublisher(project, topic)
+    from faker import Faker
+    chet = Faker()
 
-    for i in range(100):
-        psp.publish_message(dict(i=i))
+    tmp_dict = {k: str(v) for k, v in chet.pydict(nb_elements=20).items()}
+
+    for i in range(50000):
+        tmp_dict['i'] = i
+
+        psp.publish_message(tmp_dict)
 
     psp.finish()
 
