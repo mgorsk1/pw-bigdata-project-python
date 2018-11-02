@@ -86,8 +86,13 @@ class PubSubSubscriber:
             message['group']['group_topics'] = [d['topic_name'] for d in message['group']['group_topics']]
 
         # time handling
-        message['event']['time'] = PubSubSubscriber.epoch_to_strtime(message.get("event", dict()).get("time", None))
-        message['mtime'] = PubSubSubscriber.epoch_to_strtime(message.get("mtime", None))
+        event_time = PubSubSubscriber.epoch_to_strtime(message.get("event", dict()).get("time", None))
+        if event_time:
+            message['event']['time'] = event_time
+
+        mtime = PubSubSubscriber.epoch_to_strtime(message.get("mtime", None))
+        if mtime:
+            message['mtime'] = mtime
 
         # geo handling
         group_geo_lat = message.get("group", dict()).get("group_lat", None)
@@ -116,7 +121,7 @@ class PubSubSubscriber:
     @staticmethod
     def create_geo_object(lat, lon):
         return "{}, {}".format(str(lat), str(lon))
-
+                
 
 def main(project, topic, seconds=None):
     pss = PubSubSubscriber(project, topic, seconds)
