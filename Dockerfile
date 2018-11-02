@@ -3,6 +3,9 @@ MAINTAINER gorskimariusz13@gmail.com
 
 LABEL "com.gorskimariusz.project"="pw-bd-project"
 
+RUN apk update
+RUN apk add alpine-sdk gcc linux-headers python3-dev musl-dev
+
 # Set the working directory
 RUN mkdir /app
 WORKDIR /app
