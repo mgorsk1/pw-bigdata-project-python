@@ -2,6 +2,7 @@ from google.cloud import pubsub_v1
 from time import sleep, strftime, localtime
 from os import environ
 from json import loads, JSONDecodeError
+from time import time
 
 from app.elasticsearch.client import ElasticDailyIndexManager
 from config import BASE_PATH
@@ -11,7 +12,7 @@ environ['GOOGLE_APPLICATION_CREDENTIALS'] = "{}/config/keys/gcp/key.json".format
 
 class PubSubSubscriber:
     def __init__(self, project_id_arg, topic_name_arg, seconds_arg=None):
-        self.meetup_rawdata_index_manager = ElasticDailyIndexManager(topic_name_arg)
+        self.elasticsearch_index_manager = ElasticDailyIndexManager(topic_name_arg)
 
         self.project_id = project_id_arg
         self.topic_name = topic_name_arg
@@ -29,7 +30,7 @@ class PubSubSubscriber:
         def callback(message):
             document = PubSubSubscriber.struct_message(message.data)
 
-            self.meetup_rawdata_index_manager.index_document(document, message.message_id)
+            self.elasticsearch_index_manager.queue.put((document, message.message_id))
 
             message.ack()
 
@@ -43,8 +44,15 @@ class PubSubSubscriber:
         if self.seconds:
             print("Running for {} seconds...".format(self.seconds))
             sleep(self.seconds)
-            print("Read {} messages in {} seconds. That is {} mps!".format(self.counter, self.seconds,
-                                                                           self.counter / self.seconds))
+
+            time_queue_join_start = time()
+            self.elasticsearch_index_manager.queue.join()
+            time_queue_join_stop = time()
+
+            self.seconds = self.seconds + time_queue_join_stop - time_queue_join_start
+
+            print("Read {} messages in {:.2f} seconds. That is {:.2f} mps!".format(self.counter, self.seconds,
+                                                                                   self.counter / self.seconds))
         else:
             print("Running forever...")
             while True:
