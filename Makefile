@@ -60,6 +60,7 @@ setup-gcp-env: project-setup accounts-setup keys-generate pubsub-setup function-
 setup-elk-env:
 	docker-compose up -d elastic
 	docker-compose up -d kibana
+	docker-compose up -d index_rawdata
 
 	docker restart $$(docker ps -aq --filter "label=com.gorskimariusz.project=${PROJECT_NAME}")
 
