@@ -64,4 +64,5 @@ class WebsocketToPubSubEmitter:
         return self.ws.counter
 
 
-fire = WebsocketToPubSubEmitter("ws://stream.meetup.com/2/rsvps", PROJECT_ID, "meetup-rawdata", None)
+if __name__ == '__main__':
+    read = WebsocketToPubSubEmitter("ws://stream.meetup.com/2/rsvps", PROJECT_ID, "meetup-rawdata", None)
