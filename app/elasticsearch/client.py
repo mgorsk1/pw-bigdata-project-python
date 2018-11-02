@@ -3,6 +3,7 @@ from datetime import datetime
 from json import load
 from threading import Thread
 from queue import Queue
+from os import getenv
 
 from config import BASE_PATH
 
@@ -10,7 +11,11 @@ from config import BASE_PATH
 class ElasticDailyIndexManager(Thread):
     def __init__(self, index_basename):
         Thread.__init__(self)
-        self.es = Elasticsearch(port=9201)
+
+        es_port = 9200 if bool(getenv("RUNNING_IN_CONTAINER", "False")) else 9201
+        es_url = "elastic" if bool(getenv("RUNNING_IN_CONTAINER", "False")) else "localhost"
+
+        self.es = Elasticsearch(hosts=[es_url], port=es_port)
 
         self.index_template_name = index_basename
         self.index_name_mask = index_basename if index_basename.endswith("-") else index_basename + "-"
@@ -49,7 +54,6 @@ class ElasticDailyIndexManager(Thread):
                           id=id)
         except ElasticsearchException as e:
             print(document_body, id, e.args)
-
 
     def _register_index_template(self):
         template_body = self._get_json_file_content("{}/config/templates/{}.json".format(BASE_PATH,
