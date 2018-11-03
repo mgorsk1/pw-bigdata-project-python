@@ -19,7 +19,7 @@ services:
     - pw-bd-net
     volumes:
     - .:/app/
-    command: sh -c "python3 ./app/socket_reader/read.py -u ws://stream.meetup.com/2/rsvps -p ${PROJECT_ID} -t ${TOPIC_NAME}"
+    command: sh -c "python3 ./app/socket_reader/read.py -u ${WS_URL} -p ${PROJECT_ID} -t ${TOPIC_NAME}"
   elastic:
     build:
       context: ./resources/elasticsearch
