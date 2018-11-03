@@ -1,3 +1,5 @@
+import click
+
 from google.cloud import pubsub_v1
 from json import dumps
 from os import environ
@@ -51,7 +53,14 @@ class PubSubPublisher:
 
         topic_path = self.client.topic_path(self.project_id, self.topic_name)
 
-        data = dumps(message_body).encode('utf-8')
+        if isinstance(message_body, dict):
+            data = dumps(message_body)
+        elif isinstance(message_body, str):
+            data = message_body
+        else:
+            raise BaseException
+
+        data = data.encode('utf-8')
 
         future = self.client.publish(topic_path, data=data)
 
@@ -63,20 +72,15 @@ class PubSubPublisher:
         print("Processed results: " + str(len(self.future_process.results)))
 
 
-def main(project, topic):
+@click.command()
+@click.option('--project-id', '-p', required=True, type=str, help='Google Cloud Platform Project Id')
+@click.option('--topic', '-t', required=True, type=str, help='Pub/Sub Topic to which messages will be published')
+@click.option('--message', '-m', required=True, type=str, help='Message body')
+def run(project, topic, message):
     psp = PubSubPublisher(project, topic)
-    from faker import Faker
-    chet = Faker()
-
-    tmp_dict = {k: str(v) for k, v in chet.pydict(nb_elements=20).items()}
-
-    for i in range(50000):
-        tmp_dict['i'] = i
-
-        psp.publish_message(tmp_dict)
-
+    psp.publish_message(message)
     psp.finish()
 
 
 if __name__ == '__main__':
-    main(PROJECT_ID, "meetup-rawdata")
+    run()

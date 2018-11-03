@@ -3,3 +3,4 @@ protobuf==3.6.1
 websocket_client==0.53.0
 google-cloud-pubsub
 elasticsearch==6.3.0
+click==7.0.0

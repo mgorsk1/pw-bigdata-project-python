@@ -1,3 +1,5 @@
+import click
+
 from google.cloud import pubsub_v1
 from time import sleep, strftime, localtime
 from os import environ
@@ -126,13 +128,14 @@ class PubSubSubscriber:
         return result
 
 
-def main(project, topic, seconds=None):
-    pss = PubSubSubscriber(project, topic, seconds)
-
+@click.command()
+@click.option('--project-id', '-p', required=True, type=str, help='Google Cloud Platform Project Id')
+@click.option('--topic', '-t', required=True, type=str, help='Pub/Sub Topic from which messages will be read')
+@click.option('--seconds', '-s', default=None, required=False, type=int, help='For how long to read messages. If not provided - run forever')
+def run(project_id, topic, seconds):
+    pss = PubSubSubscriber(project_id, topic, seconds)
     pss.receive_and_index()
 
 
 if __name__ == '__main__':
-    from config import PROJECT_ID
-
-    main(PROJECT_ID, "meetup-rawdata", None)
+    run()
