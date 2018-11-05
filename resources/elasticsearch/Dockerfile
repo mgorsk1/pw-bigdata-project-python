@@ -14,4 +14,8 @@ COPY . .
 
 RUN chmod ugo+rwx /app/*sh
 
-CMD /app/setup_gcs_repository.sh & /usr/local/bin/docker-entrypoint.sh
+WORKDIR /usr/share/elasticsearch
+
+RUN ./bin/elasticsearch-plugin install --silent --batch repository-gcs
+
+CMD /usr/local/bin/docker-entrypoint.sh

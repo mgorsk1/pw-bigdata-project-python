@@ -60,17 +60,20 @@ setup-gcp-env: project-setup accounts-setup keys-generate pubsub-setup function-
 setup-elk-env:
 	docker-compose up -d elastic
 	docker-compose up -d kibana
-	docker-compose up -d index_rawdata
-
-	docker restart $$(docker ps -aq --filter "label=com.gorskimariusz.project=${PROJECT_NAME}")
 
 	until curl -XGET 'http://${ELASTICSEARCH_URL}:${ELASTICSEARCH_PORT}/_cluster/health?pretty' 2>&1 | grep status | egrep "(green|yellow)"; do \
 		echo "---------- Waiting for Elasticsearch to start... ----------" && sleep 1;\
 	done
 
+	docker exec -it pw-bigdata-project-python-utils_elastic_1 ./bin/elasticsearch-keystore add-file gcs.client.default.credentials_file /app/key.json
+
+	curl -X POST 'http://${ELASTICSEARCH_URL}:${ELASTICSEARCH_PORT}/_nodes/reload_secure_settings'
+
 	curl -X PUT 'http://${ELASTICSEARCH_URL}:${ELASTICSEARCH_PORT}/_snapshot/gcp_backup' \
 		-H 'Content-Type: application/json' \
 		-d @./resources/elasticsearch/gcp_backup_snapshot_repository.json
+
+	docker-compose up -d index_rawdata
 
 run-socket-reader:
 	python3 ./app/socket_reader/main.py
