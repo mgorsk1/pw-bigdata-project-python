@@ -23,6 +23,7 @@ class ProcessFutures(Thread):
         self.results = list()
 
         self.daemon = True
+
         self.start()
 
     def run(self):
@@ -76,10 +77,26 @@ class PubSubPublisher:
 @click.option('--project-id', '-p', required=True, type=str, help='Google Cloud Platform Project Id')
 @click.option('--topic', '-t', required=True, type=str, help='Pub/Sub Topic to which messages will be published')
 @click.option('--message', '-m', required=True, type=str, help='Message body')
-def run(project, topic, message):
-    psp = PubSubPublisher(project, topic)
-    psp.publish_message(message)
+@click.option('--amount', '-a', required=True, type=int, help='How many messages to send')
+def run(project_id, topic, message, amount):
+    from time import time
+
+    psp = PubSubPublisher(project_id, topic)
+
+    time_start = time()
+
+    for i in range(amount):
+        message_body = dict(i=i, message=message)
+        psp.publish_message(message_body)
+
     psp.finish()
+
+    time_stop = time()
+
+    seconds = time_stop - time_start
+
+    print("Published {} messages in {:.2f} seconds. That is {:.2f} mps!".format(amount, seconds,
+                                                                                amount / seconds))
 
 
 if __name__ == '__main__':
