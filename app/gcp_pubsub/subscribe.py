@@ -11,10 +11,17 @@ from config import BASE_PATH
 
 environ['GOOGLE_APPLICATION_CREDENTIALS'] = "{}/config/keys/gcp/key.json".format(BASE_PATH)
 
+ELASTIC_MANAGERS = environ.get("ElASTIC_MANAGERS", 1)
+
 
 class PubSubSubscriber:
     def __init__(self, project_id_arg, topic_name_arg, seconds_arg=None):
-        self.elasticsearch_index_manager = ElasticDailyIndexManager(topic_name_arg)
+        self.elasticsearch_index_managers = list()
+
+        for _ in range(ELASTIC_MANAGERS):
+            self.elasticsearch_index_managers.append(ElasticDailyIndexManager(topic_name_arg))
+
+        print(self.elasticsearch_index_managers)
 
         self.project_id = project_id_arg
         self.topic_name = topic_name_arg
@@ -23,6 +30,8 @@ class PubSubSubscriber:
 
         self.counter = 0
 
+        self.latencies = list()
+
         self.seconds = seconds_arg
 
     def receive_and_index(self):
@@ -30,11 +39,16 @@ class PubSubSubscriber:
             "{}-subscription-elastic".format(self.topic_name))
 
         def callback(message):
+            latency = message._received_timestamp - message.publish_time.timestamp()
+
             document = PubSubSubscriber.struct_message(message.data)
 
-            self.elasticsearch_index_manager.queue.put((document, message.message_id))
+            self.elasticsearch_index_managers[self.counter % ELASTIC_MANAGERS].queue.put((document, message.message_id))
 
             message.ack()
+
+            if self.seconds:
+                self.latencies.append(latency)
 
             self.counter += 1
 
@@ -48,13 +62,22 @@ class PubSubSubscriber:
             sleep(self.seconds)
 
             time_queue_join_start = time()
-            self.elasticsearch_index_manager.queue.join()
+
+            for manager in self.elasticsearch_index_managers:
+                manager.queue.join()
+
             time_queue_join_stop = time()
 
             self.seconds = self.seconds + time_queue_join_stop - time_queue_join_start
 
             print("Read {} messages in {:.2f} seconds. That is {:.2f} mps!".format(self.counter, self.seconds,
                                                                                    self.counter / self.seconds))
+
+            if self.latencies:
+                avg_latency = float(sum(self.latencies))/float(len(self.latencies))
+
+                print("Average latency was {:.2f} ms.".format(avg_latency))
+
         else:
             print("Running forever...")
             while True:
