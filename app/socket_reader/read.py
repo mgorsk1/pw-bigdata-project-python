@@ -15,7 +15,7 @@ class WebsocketToPubSubEmitter:
     def __init__(self, ws_url_arg, project_id_arg, topic_arg, seconds_arg=None):
         self.publisher = PubSubPublisher(project_id_arg, topic_arg)
         self.url = ws_url_arg
-        self.seconds=seconds_arg
+        self.seconds = seconds_arg
 
         self.ws = None
 
