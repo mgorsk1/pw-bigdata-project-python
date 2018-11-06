@@ -21,8 +21,6 @@ class PubSubSubscriber:
         for _ in range(ELASTIC_MANAGERS):
             self.elasticsearch_index_managers.append(ElasticDailyIndexManager(topic_name_arg))
 
-        print(self.elasticsearch_index_managers)
-
         self.project_id = project_id_arg
         self.topic_name = topic_name_arg
 
