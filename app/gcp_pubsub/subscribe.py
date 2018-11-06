@@ -39,9 +39,10 @@ class PubSubSubscriber:
         def callback(message):
             latency = message._received_timestamp - message.publish_time.timestamp()
 
+            message_id = message.message_id
             document = PubSubSubscriber.struct_message(message.data)
 
-            self.elasticsearch_index_managers[self.counter % ELASTIC_MANAGERS].queue.put((document, message.message_id))
+            self.elasticsearch_index_managers[self.counter % ELASTIC_MANAGERS].queue.put((document, message_id))
 
             message.ack()
 
