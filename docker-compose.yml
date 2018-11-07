@@ -9,7 +9,7 @@ services:
       - pw-bd-net
     volumes:
       - .:/app/
-    command: sh -c "./wait-for-it.sh -t 60 elastic:9200 && python3 ./app/gcp_pubsub/subscribe.py -p ${PROJECT_ID} -t ${TOPIC_NAME}"
+    command: sh -c "./wait-for-it.sh -t 60 elastic:9200 && python3 ./app/gcp_pubsub/subscribe.py --project-id ${PROJECT_ID} --topic ${TOPIC_NAME}"
   acquire_rawdata:
     build:
       context: .
@@ -19,7 +19,7 @@ services:
     - pw-bd-net
     volumes:
     - .:/app/
-    command: sh -c "python3 ./app/socket_reader/read.py -u ${WS_URL} -p ${PROJECT_ID} -t ${TOPIC_NAME}"
+    command: sh -c "python3 ./app/socket_reader/read.py --url ${WS_URL} --project-id ${PROJECT_ID} --topic ${TOPIC_NAME}"
   elastic:
     build:
       context: ./resources/elasticsearch

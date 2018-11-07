@@ -5,20 +5,22 @@ from time import sleep, strftime, localtime
 from os import environ
 from json import loads, JSONDecodeError
 from time import time
+from threading import Thread
 
 from app.elasticsearch.client import ElasticDailyIndexManager
 from config import BASE_PATH
 
 environ['GOOGLE_APPLICATION_CREDENTIALS'] = "{}/config/keys/gcp/key.json".format(BASE_PATH)
 
-ELASTIC_MANAGERS = environ.get("ElASTIC_MANAGERS", 1)
 
-
-class PubSubSubscriber:
+class PubSubSubscriber(Thread):
     def __init__(self, project_id_arg, topic_name_arg, seconds_arg=None):
+        Thread.__init__(self)
+
+        self.elastic_managers = environ.get("ElASTIC_MANAGERS", 1)
         self.elasticsearch_index_managers = list()
 
-        for _ in range(ELASTIC_MANAGERS):
+        for _ in range(self.elastic_managers):
             self.elasticsearch_index_managers.append(ElasticDailyIndexManager(topic_name_arg))
 
         self.project_id = project_id_arg
@@ -32,6 +34,11 @@ class PubSubSubscriber:
 
         self.seconds = seconds_arg
 
+        self.start()
+
+    def run(self):
+        self.receive_and_index()
+
     def receive_and_index(self):
         subscription_path = self.client.subscription_path(self.project_id,
             "{}-subscription-elastic".format(self.topic_name))
@@ -42,7 +49,7 @@ class PubSubSubscriber:
             message_id = message.message_id
             document = PubSubSubscriber.struct_message(message.data)
 
-            self.elasticsearch_index_managers[self.counter % ELASTIC_MANAGERS].queue.put((document, message_id))
+            self.elasticsearch_index_managers[self.counter % self.elastic_managers].queue.put((document, message_id))
 
             message.ack()
 
@@ -53,11 +60,8 @@ class PubSubSubscriber:
 
         self.client.subscribe(subscription_path, callback=callback)
 
-        print('Listening for messages on {}'.format(subscription_path))
-
         # if seconds specified, run only for given time. if not - run indefinitely
         if self.seconds:
-            print("Running for {} seconds...".format(self.seconds))
             sleep(self.seconds)
 
             time_queue_join_start = time()
@@ -78,7 +82,6 @@ class PubSubSubscriber:
                 print("Average latency was {:.2f} ms.".format(avg_latency))
 
         else:
-            print("Running forever...")
             while True:
                 sleep(60)
 
@@ -150,13 +153,52 @@ class PubSubSubscriber:
         return result
 
 
+class PubSubSubscribersManager:
+    def __init__(self, project_id_arg, topic_name_arg, seconds_arg=None):
+        self.threads = list()
+        self.counter = None
+        self.threads_seconds = None
+
+        self.project = project_id_arg
+        self.topic = topic_name_arg
+        self.seconds = seconds_arg
+
+    def run(self, threads_number):
+
+        if self.seconds:
+            print("Running for {} seconds...".format(self.seconds))
+        else:
+            print("Running forever")
+
+        for i in range(threads_number):
+            self.threads.append(PubSubSubscriber(self.project, self.topic, self.seconds))
+
+        for thread in self.threads:
+            thread.join()
+
+        self.counter = sum([t.counter for t in self.threads])
+        self.time_taken = max([t.seconds for t in self.threads])
+
+        print("Summary: Read {} messages in {:.2f} seconds. That is {:.2f} mps!".format(self.counter, self.time_taken,
+                                                                                        self.counter / self.time_taken))
+
+        if self.seconds:
+            try:
+                avg_latency = float(sum([sum(t.latencies) for t in self.threads])) / float(sum([len(t.latencies) for t in self.threads]))
+            except ZeroDivisionError:
+                avg_latency = 0
+
+        print("Summary: Average latency was {:.2f} ms.".format(avg_latency))
+
+
 @click.command()
-@click.option('--project-id', '-p', required=True, type=str, help='Google Cloud Platform Project Id')
-@click.option('--topic', '-t', required=True, type=str, help='Pub/Sub Topic from which messages will be read')
-@click.option('--seconds', '-s', default=None, required=False, type=int, help='For how long to read messages. If not provided - run forever')
-def run(project_id, topic, seconds):
-    pss = PubSubSubscriber(project_id, topic, seconds)
-    pss.receive_and_index()
+@click.option('--project-id', required=True, type=str, help='Google Cloud Platform Project Id')
+@click.option('--topic', required=True, type=str, help='Pub/Sub Topic from which messages will be read')
+@click.option('--seconds', default=None, required=False, type=int, help='For how long to read messages. If not provided - run forever')
+@click.option('--subscribers', default=5, type=int, help="Number of concurrent threads to read from subscription")
+def run(project_id, topic, seconds, subscribers):
+    manager = PubSubSubscribersManager(project_id, topic, seconds)
+    manager.run(subscribers)
 
 
 if __name__ == '__main__':

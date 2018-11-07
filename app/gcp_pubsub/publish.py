@@ -74,9 +74,9 @@ class PubSubPublisher:
 
 
 @click.command()
-@click.option('--project-id', '-p', required=True, type=str, help='Google Cloud Platform Project Id')
-@click.option('--topic', '-t', required=True, type=str, help='Pub/Sub Topic to which messages will be published')
-@click.option('--amount', '-a', required=True, type=int, help='How many messages to send')
+@click.option('--project-id', required=True, type=str, help='Google Cloud Platform Project Id')
+@click.option('--topic', required=True, type=str, help='Pub/Sub Topic to which messages will be published')
+@click.option('--amount', required=True, type=int, help='How many messages to send')
 def run(project_id, topic, amount):
     """
     Publishes batch of --amount test messages. --topic have corresponding json template in resources/mockups/templates

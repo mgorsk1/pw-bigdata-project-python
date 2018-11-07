@@ -66,10 +66,10 @@ class WebsocketToPubSubEmitter:
 
 
 @click.command()
-@click.option('--url', '-u', required=True, type=str, help='WebSocket data source url')
-@click.option('--project-id', '-p', required=True, type=str, help='Google Cloud Platform Project Id')
-@click.option('--topic', '-t', required=True, type=str, help='Pub/Sub Topic to which messages will be published')
-@click.option('--seconds', '-s', default=None, required=False, type=int, help='For how long to process messages. If not provided - run forever')
+@click.option('--url', required=True, type=str, help='WebSocket data source url')
+@click.option('--project-id', required=True, type=str, help='Google Cloud Platform Project Id')
+@click.option('--topic', required=True, type=str, help='Pub/Sub Topic to which messages will be published')
+@click.option('--seconds', default=None, required=False, type=int, help='For how long to process messages. If not provided - run forever')
 def run(url, project_id, topic, seconds):
     WebsocketToPubSubEmitter(url, project_id, topic, seconds)
 
