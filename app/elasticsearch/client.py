@@ -35,10 +35,9 @@ class ElasticDailyIndexManager(Thread):
 
                 metadata = dict(metadata=dict(_id=message_id))
                 self.queue.task_done()
-
                 yield self._prepare_bulk_doc(message_body, **metadata)
 
-        bulk_load = helpers.streaming_bulk(self.es, generator(), 10, yield_ok=False)
+        bulk_load = helpers.streaming_bulk(self.es, generator(), getenv('ELASTIC_BULK_CHUNK_SIZE', 10), yield_ok=False)
 
         while True:
             for success, info in bulk_load:
