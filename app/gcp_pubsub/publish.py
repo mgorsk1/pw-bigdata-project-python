@@ -76,17 +76,28 @@ class PubSubPublisher:
 @click.command()
 @click.option('--project-id', '-p', required=True, type=str, help='Google Cloud Platform Project Id')
 @click.option('--topic', '-t', required=True, type=str, help='Pub/Sub Topic to which messages will be published')
-@click.option('--message', '-m', required=True, type=str, help='Message body')
 @click.option('--amount', '-a', required=True, type=int, help='How many messages to send')
-def run(project_id, topic, message, amount):
+def run(project_id, topic, amount):
+    """
+    Publishes batch of --amount test messages. --topic have corresponding json template in resources/mockups/templates
+
+    :param project_id: Project on which topic is created
+    :param topic: Name of topic to which publish messages
+    :param amount: Number of messages to publish
+    :return:
+    """
     from time import time
 
+    from app.tools.mockups import DictFromTemplate
+
     psp = PubSubPublisher(project_id, topic)
+
+    mockup_data = DictFromTemplate(topic).generate()
 
     time_start = time()
 
     for i in range(amount):
-        message_body = dict(i=i, message=message)
+        message_body = dict(i=i, message=mockup_data)
         psp.publish_message(message_body)
 
     psp.finish()

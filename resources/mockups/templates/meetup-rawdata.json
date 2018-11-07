@@ -1,0 +1,63 @@
+{
+   "venue":{
+      "venue_name":"CoWrks, RMZ EcoWorld",
+      "lon":77.63245,
+      "lat":13.027779,
+      "venue_id":25947659
+   },
+   "visibility":"public",
+   "response":"yes",
+   "guests":0,
+   "member":{
+      "member_id":227429577,
+      "photo":"https:\/\/secure.meetupstatic.com\/photos\/member\/e\/3\/7\/9\/thumb_275878233.jpeg",
+      "member_name":"Shailendra kumar"
+   },
+   "rsvp_id":1756573319,
+   "mtime":1541586920675,
+   "event":{
+      "event_name":"CellStrat AI Lab - Coding Hours - OpenCV, CNNs and GANs (office meetup)",
+      "event_id":"255697416",
+      "time":1542430800000,
+      "event_url":"https:\/\/www.meetup.com\/Disrupt-4-0\/events\/255697416\/"
+   },
+   "group":{
+      "group_topics":[
+         {
+            "urlkey":"newtech",
+            "topic_name":"New Technology"
+         },
+         {
+            "urlkey":"mobile-technology",
+            "topic_name":"Mobile Technology"
+         },
+         {
+            "urlkey":"machine-learning",
+            "topic_name":"Machine Learning"
+         },
+         {
+            "urlkey":"emerging-technologies",
+            "topic_name":"Emerging Technologies"
+         },
+         {
+            "urlkey":"internet-of-things",
+            "topic_name":"Internet of Things"
+         },
+         {
+            "urlkey":"technology-startups",
+            "topic_name":"Technology Startups"
+         },
+         {
+            "urlkey":"artificial-intelligence-machine-learning-robotics",
+            "topic_name":"Artificial Intelligence Machine Learning Robotics"
+         }
+      ],
+      "group_city":"Bangalore",
+      "group_country":"in",
+      "group_id":23315329,
+      "group_name":"Disrupt 4.0",
+      "group_lon":77.56,
+      "group_urlname":"Disrupt-4-0",
+      "group_lat":12.97
+   }
+}
