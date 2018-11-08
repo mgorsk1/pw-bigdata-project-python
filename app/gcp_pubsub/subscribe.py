@@ -44,7 +44,7 @@ class PubSubSubscriber(Thread):
             "{}-subscription-elastic".format(self.topic_name))
 
         def callback(message):
-            latency = message._received_timestamp - message.publish_time.timestamp()
+            latency = 1000 * (message._received_timestamp - message.publish_time.timestamp())
 
             message_id = message.message_id
             document = PubSubSubscriber.struct_message(message.data)
