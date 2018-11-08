@@ -1,13 +1,14 @@
 import click
 
-from google.cloud import pubsub_v1
-from json import dumps
 from os import environ
+from json import dumps
 from threading import Thread
 from queue import Queue
+from importlib import import_module
+from google.cloud import pubsub_v1
+from google.protobuf import json_format
 
-from config import BASE_PATH, PROJECT_ID
-from logging import log
+from config import BASE_PATH
 
 environ['GOOGLE_APPLICATION_CREDENTIALS'] = "{}/config/keys/gcp/key.json".format(BASE_PATH)
 
@@ -37,7 +38,10 @@ class ProcessFutures(Thread):
 
 class PubSubPublisher:
     def __init__(self, project_id, topic_name):
+        self.message_pb2 = import_module("config.schemas.{}_pb2".format(topic_name.replace("-", "_")))
+
         self.client = pubsub_v1.PublisherClient()
+
         self.project_id = project_id
         self.topic_name = topic_name
 
@@ -55,17 +59,28 @@ class PubSubPublisher:
         topic_path = self.client.topic_path(self.project_id, self.topic_name)
 
         if isinstance(message_body, dict):
-            data = dumps(message_body)
+            message_str = dumps(message_body)
         elif isinstance(message_body, str):
-            data = message_body
+            message_str = message_body
         else:
-            raise BaseException
+            raise Exception
 
-        data = data.encode('utf-8')
+        try:
+            pb_message = json_format.Parse(message_str, self.message_pb2.MSG(), ignore_unknown_fields=False)
+        except json_format.ParseError as e:
+            print("Message didn't pass schema validation !")
+            print(message_str)
+            print(e.args)
 
-        future = self.client.publish(topic_path, data=data)
+            return False
+
+        pb_message_serialized = pb_message.SerializeToString()
+
+        future = self.client.publish(topic_path, data=pb_message_serialized)
 
         self.futures_queue.put(future)
+
+        return True
 
     def finish(self):
         self.future_process.queue.join()
@@ -97,7 +112,7 @@ def run(project_id, topic, amount):
     time_start = time()
 
     for i in range(amount):
-        message_body = dict(i=i, message=mockup_data)
+        message_body = mockup_data
         psp.publish_message(message_body)
 
     psp.finish()

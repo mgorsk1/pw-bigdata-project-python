@@ -1,14 +1,15 @@
 import click
 
-from google.cloud import pubsub_v1
-from time import sleep, strftime, localtime
 from os import environ
 from json import loads, JSONDecodeError
-from time import time
+from time import sleep, strftime, localtime, time
 from threading import Thread
+from google.cloud import pubsub_v1
+from google.protobuf.json_format import MessageToJson
+from importlib import import_module
 
-from app.elasticsearch.client import ElasticDailyIndexManager
 from config import BASE_PATH
+from app.elasticsearch.client import ElasticDailyIndexManager
 
 environ['GOOGLE_APPLICATION_CREDENTIALS'] = "{}/config/keys/gcp/key.json".format(BASE_PATH)
 
@@ -16,6 +17,8 @@ environ['GOOGLE_APPLICATION_CREDENTIALS'] = "{}/config/keys/gcp/key.json".format
 class PubSubSubscriber(Thread):
     def __init__(self, project_id_arg, topic_name_arg, seconds_arg=None):
         Thread.__init__(self)
+
+        self.message_pb2 = import_module("config.schemas.{}_pb2".format(topic_name_arg.replace("-", "_")))
 
         self.elastic_managers = environ.get("ElASTIC_MANAGERS", 1)
         self.elasticsearch_index_managers = list()
@@ -47,7 +50,7 @@ class PubSubSubscriber(Thread):
             latency = 1000 * (message._received_timestamp - message.publish_time.timestamp())
 
             message_id = message.message_id
-            document = PubSubSubscriber.struct_message(message.data)
+            document = self.protobuf_to_json(message.data)
 
             self.elasticsearch_index_managers[self.counter % self.elastic_managers].queue.put((document, message_id))
 
@@ -85,45 +88,17 @@ class PubSubSubscriber(Thread):
             while True:
                 sleep(60)
 
-    @staticmethod
-    def struct_message(message_arg, encoding='utf-8'):
-        if isinstance(message_arg, dict):
-            message = message_arg
-        elif isinstance(message_arg, bytes):
-            message = PubSubSubscriber.message_to_dict(message_arg.decode(encoding))
-        elif isinstance(message_arg, str):
-            message = PubSubSubscriber.message_to_dict(message_arg)
+    def protobuf_to_json(self, message_arg):
+        pb_message = self.message_pb2.MSG()
+        pb_message.ParseFromString(message_arg)
+
+        # if received message matches proto schema - process
+        if pb_message.IsInitialized():
+            message = loads(MessageToJson(pb_message))
+
+            return message
         else:
-            message = None
-
-        group_topics = message.get("group", dict()).get("group_topics", dict())
-
-        if group_topics:
-            message['group']['group_topics'] = [d['topic_name'] for d in message['group']['group_topics']]
-
-        # time handling
-        event_time = PubSubSubscriber.epoch_to_strtime(message.get("event", dict()).get("time", None))
-        if event_time:
-            message['event']['time'] = event_time
-
-        mtime = PubSubSubscriber.epoch_to_strtime(message.get("mtime", None))
-        if mtime:
-            message['mtime'] = mtime
-
-        # geo handling
-        group_geo_lat = message.get("group", dict()).get("group_lat", None)
-        group_geo_lon = message.get("group", dict()).get("group_lon", None)
-
-        if group_geo_lon and group_geo_lat:
-            message['group']['group_geo'] = PubSubSubscriber.create_geo_object(group_geo_lat, group_geo_lon)
-
-        venue_geo_lat = message.get("venue", dict()).get("lat", None)
-        venue_geo_lon = message.get("venue", dict()).get("lon", None)
-
-        if venue_geo_lon and venue_geo_lat:
-            message['venue']['venue_geo'] = PubSubSubscriber.create_geo_object(venue_geo_lat, venue_geo_lon)
-
-        return message
+            return None
 
     @staticmethod
     def epoch_to_strtime(epoch_time):

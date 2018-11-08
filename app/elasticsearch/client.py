@@ -34,8 +34,12 @@ class ElasticDailyIndexManager(Thread):
                 message_body, message_id = self.queue.get()
 
                 metadata = dict(metadata=dict(_id=message_id))
+
                 self.queue.task_done()
-                yield self._prepare_bulk_doc(message_body, **metadata)
+
+                prepared_document = self._prepare_bulk_doc(message_body, **metadata)
+
+                yield prepared_document
 
         bulk_load = helpers.streaming_bulk(self.es, generator(), int(getenv('ELASTIC_BULK_CHUNK_SIZE', 10)), yield_ok=False)
 
@@ -55,8 +59,8 @@ class ElasticDailyIndexManager(Thread):
             print(document_body, id, e.args)
 
     def _register_index_template(self):
-        template_body = self._get_json_file_content("{}/config/templates/{}.json".format(BASE_PATH,
-                                                                                         self.index_template_name))
+        template_body = self._get_json_file_content("{}/config/index_templates/{}.json".format(BASE_PATH,
+                                                                                               self.index_template_name))
 
         try:
             if template_body is not None:

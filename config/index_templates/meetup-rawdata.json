@@ -21,10 +21,11 @@
         },
         {
           "date_by_name": {
-            "match_mapping_type": "string",
+            "match_mapping_type": "double",
             "match":   "*time",
             "mapping": {
-              "type": "date"
+              "type": "date",
+              "format": "epoch_millis"
             }
           }
         },

@@ -1,0 +1,92 @@
+syntax= "proto2";
+
+package project.bd.pw;
+
+message MSG {
+
+  message VENUE {
+    optional string venue_name = 1;
+    required double lon = 2;
+    required double lat = 3;
+    required double venue_id = 4;
+  }
+
+  optional VENUE venue = 1;
+  required string visibility = 2;
+  required string response = 3;
+  required double guests = 4;
+
+  message MEMBER {
+    required double member_id = 1;
+
+    message OTHER_SERVICES {
+
+      message TWITTER {
+        required string identifier = 1;
+      }
+
+      optional TWITTER twitter = 1;
+
+      message FACEBOOK {
+        required string identifier = 1;
+      }
+
+      optional FACEBOOK facebook = 2;
+
+      message TUMBLR {
+        required string identifier = 1;
+      }
+
+      optional TUMBLR tumblr = 3;
+
+      message FLICKR {
+        required string identifier = 1;
+      }
+
+      optional FLICKR flickr = 4;
+
+      message LINKEDIN {
+        required string identifier = 1;
+      }
+
+      optional LINKEDIN linkedin = 5;
+      }
+
+    optional OTHER_SERVICES other_services = 2;
+    optional string photo = 3;
+    required string member_name = 4;
+  }
+
+  required MEMBER member = 5;
+  required double rsvp_id = 6;
+  required double mtime = 7;
+
+  message EVENT {
+    required string event_name = 1;
+    required string event_id = 2;
+    optional double time = 3;
+    required string event_url = 4;
+  }
+
+  required EVENT event = 8;
+
+  message GROUP {
+
+    message GROUP_TOPICS {
+      required string urlkey = 1;
+      required string topic_name = 2;
+    }
+
+    repeated GROUP_TOPICS group_topics = 1;
+    required string group_city = 2;
+    required string group_country = 3;
+    required double group_id = 4;
+    required string group_name = 5;
+    required double group_lon = 6;
+    required string group_urlname = 7;
+    optional string group_state = 8;
+    required double group_lat = 9;
+  }
+
+  required GROUP group = 10;
+}
