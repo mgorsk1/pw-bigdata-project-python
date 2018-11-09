@@ -6,9 +6,9 @@ message MSG {
 
   message VENUE {
     optional string venue_name = 1;
-    required double lon = 2;
-    required double lat = 3;
-    required double venue_id = 4;
+    optional double lon = 2;
+    optional double lat = 3;
+    optional double venue_id = 4;
   }
 
   optional VENUE venue = 1;
@@ -22,31 +22,31 @@ message MSG {
     message OTHER_SERVICES {
 
       message TWITTER {
-        required string identifier = 1;
+        optional string identifier = 1;
       }
 
       optional TWITTER twitter = 1;
 
       message FACEBOOK {
-        required string identifier = 1;
+        optional string identifier = 1;
       }
 
       optional FACEBOOK facebook = 2;
 
       message TUMBLR {
-        required string identifier = 1;
+        optional string identifier = 1;
       }
 
       optional TUMBLR tumblr = 3;
 
       message FLICKR {
-        required string identifier = 1;
+        optional string identifier = 1;
       }
 
       optional FLICKR flickr = 4;
 
       message LINKEDIN {
-        required string identifier = 1;
+        optional string identifier = 1;
       }
 
       optional LINKEDIN linkedin = 5;
