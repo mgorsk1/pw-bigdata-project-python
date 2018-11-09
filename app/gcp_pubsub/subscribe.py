@@ -86,7 +86,7 @@ class PubSubSubscriber(Thread):
                 sleep(60)
 
     @staticmethod
-    def protobuf_to_json(self, message_arg):
+    def protobuf_to_json(message_arg):
         try:
             pb_message = MSG()
             pb_message.ParseFromString(message_arg)
