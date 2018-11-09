@@ -11,8 +11,10 @@ RUN mkdir /app
 WORKDIR /app
 
 # Install app dependencies
-COPY requirements.txt .
+COPY . .
 RUN pip3 install -r requirements.txt
+
+RUN make -i compile-pyrobuf-lib
 
 ENV PYTHONPATH "$PYTHONPATH:/app"
 ENV RUNNING_IN_CONTAINER "True"

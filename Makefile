@@ -4,6 +4,8 @@ SA_NAME=pubsub-all-meetup
 ELASTICSEARCH_URL=localhost
 ELASTICSEARCH_PORT=9201
 
+PROTOBUF_SCHEMA?=meetup_rawdata
+
 project-setup:
 	# project setup
 	gcloud projects create ${PROJECT_NAME}
@@ -74,6 +76,17 @@ setup-elk-env:
 		-d @./resources/elasticsearch/gcp_backup_snapshot_repository.json
 
 	docker-compose up -d index_rawdata
+
+compile-pyrobuf-lib:
+	pip3 uninstall -y pyrobuf-generated
+	mkdir -p tmp/pyrobuf
+
+	cd ./tmp/pyrobuf; \
+	python3 -m pyrobuf \
+		--install ../../resources/protobuf/${PROTOBUF_SCHEMA}.proto \
+		--package message_proto; \
+	cd ../../; \
+	rm -frd tmp/pyrobuf
 
 run-socket-reader:
 	python3 ./app/socket_reader/main.py

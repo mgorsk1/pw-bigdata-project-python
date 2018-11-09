@@ -4,3 +4,4 @@ websocket_client==0.53.0
 google-cloud-pubsub==0.38.0
 elasticsearch==6.3.0
 click==7.0.0
+pyrobuf==0.8.3

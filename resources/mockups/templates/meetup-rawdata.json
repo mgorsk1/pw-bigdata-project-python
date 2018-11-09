@@ -1,10 +1,4 @@
 {
-   "venue":{
-      "venue_name":"Region 13 Education Services Center",
-      "lon":-97.67315,
-      "lat":30.300669,
-      "venue_id":675703
-   },
    "visibility":"public",
    "response":"no",
    "guests":0,

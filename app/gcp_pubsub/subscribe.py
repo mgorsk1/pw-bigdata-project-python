@@ -5,8 +5,7 @@ from json import loads, JSONDecodeError
 from time import sleep, strftime, localtime, time
 from threading import Thread
 from google.cloud import pubsub_v1
-from google.protobuf.json_format import MessageToJson
-from importlib import import_module
+from message_proto import MSG
 
 from config import BASE_PATH
 from app.elasticsearch.client import ElasticDailyIndexManager
@@ -17,8 +16,6 @@ environ['GOOGLE_APPLICATION_CREDENTIALS'] = "{}/config/keys/gcp/key.json".format
 class PubSubSubscriber(Thread):
     def __init__(self, project_id_arg, topic_name_arg, seconds_arg=None):
         Thread.__init__(self)
-
-        self.message_pb2 = import_module("config.schemas.{}_pb2".format(topic_name_arg.replace("-", "_")))
 
         self.elastic_managers = environ.get("ElASTIC_MANAGERS", 1)
         self.elasticsearch_index_managers = list()
@@ -50,7 +47,7 @@ class PubSubSubscriber(Thread):
             latency = 1000 * (message._received_timestamp - message.publish_time.timestamp())
 
             message_id = message.message_id
-            document = self.protobuf_to_json(message.data)
+            document = PubSubSubscriber.protobuf_to_json(message.data)
 
             self.elasticsearch_index_managers[self.counter % self.elastic_managers].queue.put((document, message_id))
 
@@ -88,13 +85,20 @@ class PubSubSubscriber(Thread):
             while True:
                 sleep(60)
 
+    @staticmethod
     def protobuf_to_json(self, message_arg):
-        pb_message = self.message_pb2.MSG()
-        pb_message.ParseFromString(message_arg)
+        try:
+            pb_message = MSG()
+            pb_message.ParseFromString(message_arg)
+        except Exception as e:
+            print(e.arsg)
 
         # if received message matches proto schema - process
         if pb_message.IsInitialized():
-            message = loads(MessageToJson(pb_message))
+            try:
+                message = pb_message.SerializeToDict()
+            except Exception as e:
+                print(e.args)
 
             return message
         else:

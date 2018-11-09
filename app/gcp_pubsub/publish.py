@@ -4,9 +4,8 @@ from os import environ
 from json import dumps
 from threading import Thread
 from queue import Queue
-from importlib import import_module
 from google.cloud import pubsub_v1
-from google.protobuf import json_format
+from message_proto import MSG
 
 from config import BASE_PATH
 
@@ -38,8 +37,6 @@ class ProcessFutures(Thread):
 
 class PubSubPublisher:
     def __init__(self, project_id, topic_name):
-        self.message_pb2 = import_module("config.schemas.{}_pb2".format(topic_name.replace("-", "_")))
-
         self.client = pubsub_v1.PublisherClient()
 
         self.project_id = project_id
@@ -66,8 +63,9 @@ class PubSubPublisher:
             raise Exception
 
         try:
-            pb_message = json_format.Parse(message_str, self.message_pb2.MSG(), ignore_unknown_fields=False)
-        except json_format.ParseError as e:
+            pb_message = MSG()
+            pb_message.ParseFromJson(message_str)
+        except Exception as e:
             print("Message didn't pass schema validation !")
             print(message_str)
             print(e.args)
