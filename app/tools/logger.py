@@ -27,13 +27,6 @@ class Logger:
         self.levels = {'DEBUG': logging.DEBUG, 'INFO': logging.INFO, 'WARNING': logging.WARNING, 'ERROR': logging.ERROR,
                        'CRITICAL': logging.CRITICAL}
 
-        # create log dir
-        try:
-            if not path.exists(self.log_dir):
-                makedirs(self.log_dir)
-        except Exception as e:
-            exit(1)
-
     def logit(self, t):
         try:
             log_level = t['log_level']
