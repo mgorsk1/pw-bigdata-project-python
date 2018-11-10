@@ -4,7 +4,7 @@ import click
 from app.gcp_pubsub.publish import PubSubPublisher
 from time import sleep
 
-from app.logger import log
+from app.tools.logger import log
 
 
 try:

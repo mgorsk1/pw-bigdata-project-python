@@ -1,4 +1,4 @@
-from app.logger import log
+from app.tools.logger import log
 
 
 class ThreadsManager:

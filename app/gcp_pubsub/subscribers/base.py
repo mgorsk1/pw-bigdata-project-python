@@ -1,5 +1,3 @@
-import click
-
 from os import environ
 from time import sleep, strftime, localtime, time
 from threading import Thread
@@ -7,7 +5,7 @@ from google.cloud import pubsub_v1
 from message_proto import MSG
 
 from config import BASE_PATH
-from app.logger import log
+from app.tools.logger import log
 from app.elasticsearch.client import ElasticDailyIndexManager
 
 environ['GOOGLE_APPLICATION_CREDENTIALS'] = "{}/config/keys/gcp/key.json".format(BASE_PATH)

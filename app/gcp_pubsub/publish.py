@@ -8,7 +8,7 @@ from google.cloud import pubsub_v1
 from message_proto import MSG
 
 from config import BASE_PATH
-from app.logger import log
+from app.tools.logger import log
 
 environ['GOOGLE_APPLICATION_CREDENTIALS'] = "{}/config/keys/gcp/key.json".format(BASE_PATH)
 
