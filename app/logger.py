@@ -3,22 +3,20 @@ import logging
 from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 from os import path, makedirs
 from socket import gethostname
-from sys import exit
-from logging import handlers
-
-from config import BASE_PATH
+from sys import exit, stdout
+from config import BASE_PATH, LOG_LEVEL
 
 
 class Logger:
-    def __init__(self, debug_level, name_arg, path_arg, rotate_when_arg='midnight', rotate_retention_arg=14):
+    def __init__(self, name_arg, debug_level, rotate_retention_arg, rotate_when_arg='midnight'):
         self.name = name_arg
-        self.path = path_arg
-        self.debug_level = debug_level
+        self.path = "{}".format(BASE_PATH)
+        self.debug_level = int(debug_level)
         self.log_dir = '{path}/log'.format(path=self.path)
 
         self.current_level = 0
 
-        self.logger = logging.getLogger('myapp')
+        self.logger = logging.getLogger(self.name)
         self.logger.setLevel(self.debug_level)
 
         self.hostname = gethostname()
@@ -26,10 +24,7 @@ class Logger:
         self.rotate_when = rotate_when_arg
         self.rotate_retention = rotate_retention_arg
 
-        self.levels = {'DEBUG': logging.DEBUG,
-                       'INFO': logging.INFO,
-                       'WARNING': logging.WARNING,
-                       'ERROR': logging.ERROR,
+        self.levels = {'DEBUG': logging.DEBUG, 'INFO': logging.INFO, 'WARNING': logging.WARNING, 'ERROR': logging.ERROR,
                        'CRITICAL': logging.CRITICAL}
 
         # create log dir
@@ -38,6 +33,28 @@ class Logger:
                 makedirs(self.log_dir)
         except Exception as e:
             exit(1)
+
+    def logit(self, t):
+        try:
+            log_level = t['log_level']
+            log_message = t['log_message']
+
+            if log_level == 'DEBUG':
+                self.log_debug(log_message)
+            elif log_level == 'INFO':
+                self.log_info(log_message)
+            elif log_level == 'WARNING':
+                self.log_warning(log_message)
+            elif log_level == 'ERROR':
+                self.log_error(log_message)
+            elif log_level == 'CRITICAL':
+                self.log_critical(log_message)
+            else:
+                pass
+        except:
+            pass
+        finally:
+            pass
 
     def log_debug(self, message):
         self.change_formatter(logging.DEBUG)
@@ -87,10 +104,12 @@ class Logger:
         # add handler
         log_file = '{path}/log/{name}.log'.format(path=self.path, name=self.name)
 
-        handler = logging.handlers.TimedRotatingFileHandler(log_file,
-                                                            when=self.rotate_when,
-                                                            interval=1,
-                                                            backupCount=self.rotate_retention)
+        # handler = logging.handlers.TimedRotatingFileHandler(log_file,
+        #                                                     when=self.rotate_when,
+        #                                                     interval=1,
+        #                                                     backupCount=self.rotate_retention)
+
+        handler = logging.StreamHandler(stdout)
 
         formatter = logging.Formatter(blank_space[level_arg])
         handler.setFormatter(formatter)
@@ -98,4 +117,5 @@ class Logger:
         self.logger.addHandler(handler)
 
 
-log = Logger(20, "pw-bd-project-python-utils", "{}/log".format(BASE_PATH))
+
+log = Logger('pw-bd-project', LOG_LEVEL, 30)

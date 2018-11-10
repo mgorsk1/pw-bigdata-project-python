@@ -9,7 +9,7 @@ services:
       - pw-bd-net
     volumes:
       - .:/app/
-    command: sh -c "./wait-for-it.sh -t 60 elastic:9200 && python3 ./app/gcp_pubsub/subscribe.py --project-id ${PROJECT_ID} --topic ${TOPIC_NAME}"
+    command: sh -c "./wait-for-it.sh -t 60 elastic:9200 && python3 ./app/gcp_pubsub/subscribers/main.py --project-id ${PROJECT_ID} --topic ${TOPIC_NAME}"
   acquire_rawdata:
     build:
       context: .

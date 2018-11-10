@@ -4,6 +4,8 @@ import click
 from app.gcp_pubsub.publish import PubSubPublisher
 from time import sleep
 
+from app.logger import log
+
 
 try:
     import thread
@@ -12,6 +14,10 @@ except ImportError:
 
 
 class WebsocketToPubSubEmitter:
+    """
+    Class responsible for reading data from any Websocket (ws_url_arg) and sending it to pub/sub topic using
+    PubSubPublisher class.
+    """
     def __init__(self, ws_url_arg, project_id_arg, topic_arg, seconds_arg=None):
         self.publisher = PubSubPublisher(project_id_arg, topic_arg)
         self.url = ws_url_arg
@@ -31,31 +37,36 @@ class WebsocketToPubSubEmitter:
         self.ws.counter = 0
 
         self.ws.on_open = self.on_open
+
+        log.log_info("{} - Starting listening on: {} Messages will be published to: {}".format(
+                self.__class__.__name__, self.url, str(self.publisher)))
+
         self.ws.run_forever()
 
     def on_message(self, message):
         self.publisher.publish_message(message)
+        log.log_debug("{} - Acquired message: {}".format(self.__class__.__name__, message))
+
         self.ws.counter += 1
 
     def on_error(self, error):
         print(error)
 
     def on_close(self):
-        print("### closed ###")
+        log.log_info("{} - Websocket closed".format(self.__class__.__name__))
 
     def on_open(self):
         def run(*args):
             if self.seconds:
-                print("Running for {} seconds...".format(self.seconds))
+                log.log_info("{} - Running for {} seconds".format(self.__class__.__name__, self.seconds))
                 sleep(self.seconds)
                 self.ws.close()
 
-                print("Published {} messages in {} seconds. That is {:.2f} mps!".format(self.ws.counter,
-                                                                                        self.seconds,
-                                                                                        self.ws.counter/self.seconds))
+                log.log_info("{} - Published {} messages in {} seconds. That is {:.2f} mps!".format(
+                               self.__class__.__name__, self.ws.counter, self.seconds, self.ws.counter/self.seconds))
 
             else:
-                print("Running forever...")
+                log.log_info("{} - Running forever".format(self.__class__.__name__, self.seconds))
                 while True:
                     pass
 

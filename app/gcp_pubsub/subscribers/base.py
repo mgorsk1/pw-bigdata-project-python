@@ -1,20 +1,35 @@
 import click
 
 from os import environ
-from json import loads, JSONDecodeError
 from time import sleep, strftime, localtime, time
 from threading import Thread
 from google.cloud import pubsub_v1
 from message_proto import MSG
 
 from config import BASE_PATH
+from app.logger import log
 from app.elasticsearch.client import ElasticDailyIndexManager
 
 environ['GOOGLE_APPLICATION_CREDENTIALS'] = "{}/config/keys/gcp/key.json".format(BASE_PATH)
 
 
-class PubSubSubscriber(Thread):
-    def __init__(self, project_id_arg, topic_name_arg, seconds_arg=None):
+class BaseSubscriber(Thread):
+    """Base class responsible for reading raw data from pub/sub subscription and indexing it into Elasticsearch.
+
+    It should be used with ThreadsManager, where number of concurrent threads is selected.
+
+    It requires index template to be present in config/index_templates. Index name must be named the same way as topic
+    from which data is subscribed.
+
+    Schema validation is performed using pyrobuf (implementation of proto buffers).
+    Before running class make sure that proto file corresponding to shema of subscription data was compiled with
+    pyrobuf and installed in Your venv (here we use message_proto.MSG() generalized library name).
+
+    Can be used directly, or, if we want to perform some data enrichment, subclassed with overriding enrich function,
+    where custom data enrichment logic can be implemented.
+    """
+
+    def __init__(self, project_id_arg, topic_name_arg, seconds_arg=None, **kwargs):
         Thread.__init__(self)
 
         self.elastic_managers = environ.get("ElASTIC_MANAGERS", 1)
@@ -47,7 +62,7 @@ class PubSubSubscriber(Thread):
             latency = 1000 * (message._received_timestamp - message.publish_time.timestamp())
 
             message_id = message.message_id
-            document = PubSubSubscriber.protobuf_to_json(message.data)
+            document = self.enrich(BaseSubscriber.protobuf_to_json(message.data))
 
             self.elasticsearch_index_managers[self.counter % self.elastic_managers].queue.put((document, message_id))
 
@@ -73,17 +88,20 @@ class PubSubSubscriber(Thread):
 
             self.seconds = self.seconds + time_queue_join_stop - time_queue_join_start
 
-            print("Read {} messages in {:.2f} seconds. That is {:.2f} mps!".format(self.counter, self.seconds,
-                                                                                   self.counter / self.seconds))
+            log.log_info("{} - Read {} messages in {:.2f} seconds. That is {:.2f} mps!".format(
+                                   self.__class__.__name__, self.counter, self.seconds, self.counter / self.seconds))
 
             if self.latencies:
                 avg_latency = float(sum(self.latencies))/float(len(self.latencies))
 
-                print("Average latency was {:.2f} ms.".format(avg_latency))
+                log.log_info("{} - Average latency was {:.2f} ms.".format(self.__class__.__name__, avg_latency))
 
         else:
             while True:
                 sleep(60)
+
+    def enrich(self, dict_arg):
+        return dict_arg
 
     @staticmethod
     def protobuf_to_json(message_arg):
@@ -117,68 +135,5 @@ class PubSubSubscriber(Thread):
     def create_geo_object(lat, lon):
         return "{}, {}".format(str(lat), str(lon))
 
-    @staticmethod
-    def message_to_dict(message_arg):
-        keep_going = True
-        result = message_arg
-
-        while keep_going and (not isinstance(result, dict)):
-            try:
-                result = loads(result)
-            except JSONDecodeError:
-                result = None
-                keep_going = False
-
-        return result
 
 
-class PubSubSubscribersManager:
-    def __init__(self, project_id_arg, topic_name_arg, seconds_arg=None):
-        self.threads = list()
-        self.counter = None
-        self.threads_seconds = None
-
-        self.project = project_id_arg
-        self.topic = topic_name_arg
-        self.seconds = seconds_arg
-
-    def run(self, threads_number):
-
-        if self.seconds:
-            print("Running for {} seconds...".format(self.seconds))
-        else:
-            print("Running forever")
-
-        for i in range(threads_number):
-            self.threads.append(PubSubSubscriber(self.project, self.topic, self.seconds))
-
-        for thread in self.threads:
-            thread.join()
-
-        self.counter = sum([t.counter for t in self.threads])
-        self.time_taken = max([t.seconds for t in self.threads])
-
-        print("Summary: Read {} messages in {:.2f} seconds. That is {:.2f} mps!".format(self.counter, self.time_taken,
-                                                                                        self.counter / self.time_taken))
-
-        if self.seconds:
-            try:
-                avg_latency = float(sum([sum(t.latencies) for t in self.threads])) / float(sum([len(t.latencies) for t in self.threads]))
-            except ZeroDivisionError:
-                avg_latency = 0
-
-        print("Summary: Average latency was {:.2f} ms.".format(avg_latency))
-
-
-@click.command()
-@click.option('--project-id', required=True, type=str, help='Google Cloud Platform Project Id')
-@click.option('--topic', required=True, type=str, help='Pub/Sub Topic from which messages will be read')
-@click.option('--seconds', default=None, required=False, type=int, help='For how long to read messages. If not provided - run forever')
-@click.option('--subscribers', default=5, type=int, help="Number of concurrent threads to read from subscription")
-def run(project_id, topic, seconds, subscribers):
-    manager = PubSubSubscribersManager(project_id, topic, seconds)
-    manager.run(subscribers)
-
-
-if __name__ == '__main__':
-    run()

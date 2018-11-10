@@ -7,9 +7,14 @@ from config import BASE_PATH
 
 
 class DictFromTemplate:
+    """
+    Class creating JSON with dumym data bsed on provided template_name.json.
+
+    Template should be stored in resources/templates.
+    """
     def __init__(self, template_name):
 
-        with open('{}/resources/mockups/templates/{}.json'.format(BASE_PATH, template_name), 'r+') as f:
+        with open('{}/resources/templates/{}.json'.format(BASE_PATH, template_name), 'r+') as f:
             template_raw = f.read()
 
         try:

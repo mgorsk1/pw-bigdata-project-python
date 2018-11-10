@@ -8,6 +8,7 @@ from google.cloud import pubsub_v1
 from message_proto import MSG
 
 from config import BASE_PATH
+from app.logger import log
 
 environ['GOOGLE_APPLICATION_CREDENTIALS'] = "{}/config/keys/gcp/key.json".format(BASE_PATH)
 
@@ -36,6 +37,15 @@ class ProcessFutures(Thread):
 
 
 class PubSubPublisher:
+    """Class responsible for publishing messages to GCP Pub/Sub topic.
+
+    It processess future.result() in separate thread to increase throughput.
+
+    Schema validation is performed using pyrobuf (implementation of proto buffers).
+    Before running class make sure that proto file corresponding to shema of subscription data was compiled with
+    pyrobuf and installed in Your venv (here we use message_proto.MSG() generalized library name).
+
+    """
     def __init__(self, project_id, topic_name):
         self.client = pubsub_v1.PublisherClient()
 
@@ -66,9 +76,7 @@ class PubSubPublisher:
             pb_message = MSG()
             pb_message.ParseFromJson(message_str)
         except Exception as e:
-            print("Message didn't pass schema validation !")
-            print(message_str)
-            print(e.args)
+            log.log_warning("{} - Message didn't pass schema validation !\n{}".format(self.__class__.__name__, e.args))
 
             return False
 
@@ -83,7 +91,8 @@ class PubSubPublisher:
     def finish(self):
         self.future_process.queue.join()
 
-        print("Processed results: " + str(len(self.future_process.results)))
+        log.log_info("{} - Processed results: {}".format(self.__class__.__name__,
+                                                         str(len(self.future_process.results))))
 
 
 @click.command()
@@ -119,8 +128,11 @@ def run(project_id, topic, amount):
 
     seconds = time_stop - time_start
 
-    print("Published {} messages in {:.2f} seconds. That is {:.2f} mps!".format(amount, seconds,
-                                                                                amount / seconds))
+    log.log_warning("Published {} messages in {:.2f} seconds. That is {:.2f} mps!".format(amount,
+                                                                                          seconds,
+                                                                                          amount / seconds))
+
+    print()
 
 
 if __name__ == '__main__':
