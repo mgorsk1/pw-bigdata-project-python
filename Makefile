@@ -6,6 +6,12 @@ ELASTICSEARCH_PORT=9201
 
 PROTOBUF_SCHEMA?=meetup_rawdata
 
+SSH_KEY='/home/mgorski/Dokumenty/keys/ovh/id_rsa'
+
+MASTER_HOST='10.112.112.11'
+MASTER_USER='mgorski'
+MASTER_DIR='/home/mgorski/pw-bd-project/'
+
 project-setup:
 	# project setup
 	gcloud projects create ${PROJECT_NAME}
@@ -60,6 +66,7 @@ function-register:
 setup-gcp-env: project-setup accounts-setup keys-generate pubsub-setup function-register
 
 setup-elk-env:
+	docker-compose build
 	docker-compose up -d elastic
 	docker-compose up -d kibana
 
@@ -67,15 +74,23 @@ setup-elk-env:
 		echo "---------- Waiting for Elasticsearch to start... ----------" && sleep 1;\
 	done
 
-	docker exec -it pw-bigdata-project-python-utils_elastic_1 ./bin/elasticsearch-keystore add-file gcs.client.default.credentials_file /app/key.json
+	docker exec -it pw-bd-project_elastic_1 ./bin/elasticsearch-keystore add-file gcs.client.default.credentials_file /app/key.json
 
+    # change elastic config
 	curl -X POST 'http://${ELASTICSEARCH_URL}:${ELASTICSEARCH_PORT}/_nodes/reload_secure_settings'
 
 	curl -X PUT 'http://${ELASTICSEARCH_URL}:${ELASTICSEARCH_PORT}/_snapshot/gcp_backup' \
 		-H 'Content-Type: application/json' \
 		-d @./resources/elasticsearch/gcp_backup_snapshot_repository.json
 
-	docker-compose up -d index_rawdata
+	curl -XPUT 'http://${ELASTICSEARCH_URL}:${ELASTICSEARCH_PORT}/_cluster/settings' \
+	 -H 'Content-Type: application/json' \
+	 -d '{"persistent" : {"cluster.routing.allocation.disk.threshold_enabled": false}}'
+
+	docker-compose up -d index_rawdata, acquire_rawdata
+
+teardown-elk-env:
+	docker rm -f $$(docker ps -aq --filter "label=com.gorskimariusz.project=pw-bd-project")
 
 compile-pyrobuf-lib:
 	pip3 uninstall -y pyrobuf-generated
@@ -90,3 +105,7 @@ compile-pyrobuf-lib:
 
 run-socket-reader:
 	python3 ./app/socket_reader/main.py
+
+sync-repo:
+	rsync -avh --chmod=0755 --progress --cvs-exclude --include '.env' --exclude '__pycache__' --exclude 'tmp' --exclude '.docker' --exclude 'venv' --exclude 'tests' --exclude '.vscode' --exclude='*.pyc' --exclude 'log' --exclude 'jar' --exclude '.idea' -e "ssh -i $(SSH_KEY)" ./* ${MASTER_USER}@$(MASTER_HOST):$(MASTER_DIR)/${PROJECT_FOLDER}
+
