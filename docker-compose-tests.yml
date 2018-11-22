@@ -1,6 +1,6 @@
 version: '2.1'
 services:
-  index_rawdata:
+  index_test_data:
     build:
       context: .
       dockerfile: Dockerfile
@@ -9,19 +9,19 @@ services:
       - pw-bd-net
     volumes:
       - .:/app/
-    command: sh -c "./wait-for-it.sh -t 60 elastic:9200 && python3 ./app/gcp_pubsub/subscribers/main.py --project-id ${PROJECT_ID} --topic ${TOPIC_NAME}"
-  acquire_rawdata:
+    command: sh -c "./wait-for-it.sh -t 60 elastic:9200 && python3 ./app/gcp_pubsub/subscribers/main.py --project-id ${PROJECT_ID} --topic ${TOPIC_NAME} --seconds 60"
+    environment:
+      - ELASTIC_BULK_CHUNK_SIZE=1000
+  publish_test_data:
     build:
       context: .
       dockerfile: Dockerfile
     restart: always
     networks:
-      - pw-bd-net
-    depends_on:
-      - index_rawdata
+    - pw-bd-net
     volumes:
-      - .:/app/
-    command: sh -c "python3 ./app/socket_reader/read.py --url ${WS_URL} --project-id ${PROJECT_ID} --topic ${TOPIC_NAME}"
+    - .:/app/
+    command: sh -c "python3 ./app/gcp_pubsub/publish.py --project-id ${PROJECT_ID} --topic ${TOPIC_NAME} --amount 100000"
   elastic:
     build:
       context: ./resources/elasticsearch
