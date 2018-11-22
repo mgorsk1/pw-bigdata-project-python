@@ -25,7 +25,7 @@
             "match":   "*time",
             "mapping": {
               "type": "date",
-              "format": "epoch_millis"
+              "format": "yyyy-MM-dd HH:mm:ss zzZZ||epoch_millis"
             }
           }
         },
