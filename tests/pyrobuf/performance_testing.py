@@ -6,12 +6,14 @@ from json import loads
 from time import time
 from math import ceil, floor
 
-tries = 10000
+from config import BASE_PATH
+
+tries = 100000
 
 header_length = 100
 middle = "\n" + "-" * header_length + "\n"
 
-with open('../mockups/templates/meetup-rawdata.json') as f:
+with open('{}/resources/templates/meetup-rawdata.json'.format(BASE_PATH)) as f:
     raw_string = f.read()
     raw_dict = loads(raw_string)
 
