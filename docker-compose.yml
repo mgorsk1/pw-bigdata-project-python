@@ -30,7 +30,7 @@ services:
     networks:
       - pw-bd-net
     ports:
-      - "9201:9200"
+      - "9202:9200"
   kibana:
     image: docker.elastic.co/kibana/kibana:6.5.0
     restart: always

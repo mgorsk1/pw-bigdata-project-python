@@ -12,7 +12,7 @@ class ElasticDailyIndexManager(Thread):
     def __init__(self, index_basename):
         Thread.__init__(self)
 
-        es_port = 9200 if ElasticDailyIndexManager.str_to_bool(getenv("RUNNING_IN_CONTAINER", "False")) else 9201
+        es_port = 9200 if ElasticDailyIndexManager.str_to_bool(getenv("RUNNING_IN_CONTAINER", "False")) else 9202
         es_url = "elastic" if ElasticDailyIndexManager.str_to_bool(getenv("RUNNING_IN_CONTAINER", "False")) else "localhost"
 
         self.es = Elasticsearch(hosts=[es_url], port=es_port)
@@ -41,7 +41,12 @@ class ElasticDailyIndexManager(Thread):
 
                 yield prepared_document
 
-        bulk_load = helpers.streaming_bulk(self.es, generator(), int(getenv('ELASTIC_BULK_CHUNK_SIZE', 10)), yield_ok=False)
+        bulk_load = helpers.streaming_bulk(self.es,
+                                           generator(),
+                                           int(getenv('ELASTIC_BULK_CHUNK_SIZE', 10)),
+                                           yield_ok=False,
+                                           max_retries=5,
+                                           request_timeout=30)
 
         while True:
             for success, info in bulk_load:

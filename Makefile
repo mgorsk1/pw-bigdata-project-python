@@ -2,7 +2,7 @@ PROJECT_NAME=pw-bd-project
 SA_NAME=pubsub-all-meetup
 
 ELASTICSEARCH_URL=localhost
-ELASTICSEARCH_PORT=9201
+ELASTICSEARCH_PORT=9202
 
 PROTOBUF_SCHEMA?=meetup_rawdata
 
