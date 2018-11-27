@@ -1,11 +1,11 @@
 {
   "index_patterns": [
-    "meetup-rawdata*"
+    "meetup-*"
   ],
   "settings": {
     "index": {
-      "number_of_shards": 2,
-      "number_of_replicas": 1
+      "number_of_shards": 1,
+      "number_of_replicas": 0
     }
   },
   "mappings": {
@@ -25,7 +25,7 @@
             "match":   "*time",
             "mapping": {
               "type": "date",
-              "format": "yyyy-MM-dd HH:mm:ss zzZZ||epoch_millis"
+              "format": "yyyy-MM-dd HH:mm:ss||epoch_millis"
             }
           }
         },
