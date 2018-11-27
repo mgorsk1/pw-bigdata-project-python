@@ -31,8 +31,19 @@ services:
       - pw-bd-net
     ports:
       - "9202:9200"
+    environment:
+      - cluster.name=pw-bd-project
+      - node.name=master
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms6g -Xmx6g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
   kibana:
-    image: docker.elastic.co/kibana/kibana:6.5.0
+    image: docker.elastic.co/kibana/kibana:6.3.1
     restart: always
     networks:
       - pw-bd-net
@@ -49,3 +60,7 @@ networks:
       config:
         - subnet: 171.15.238.0/24
           gateway: 171.15.238.1
+
+volumes:
+  esdata:
+    driver: local
