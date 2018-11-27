@@ -29,28 +29,31 @@ class ElasticDailyIndexManager(Thread):
         self.start()
 
     def run(self):
-        def generator():
-            while True:
-                message_body, message_id = self.queue.get()
-
-                metadata = dict(metadata=dict(_id=message_id))
-
-                self.queue.task_done()
-
-                prepared_document = self._prepare_bulk_doc(message_body, **metadata)
-
-                yield prepared_document
-
-        bulk_load = helpers.streaming_bulk(self.es,
-                                           generator(),
-                                           int(getenv('ELASTIC_BULK_CHUNK_SIZE', 10)),
-                                           yield_ok=False,
-                                           max_retries=5,
-                                           request_timeout=30)
+        # def generator():
 
         while True:
-            for success, info in bulk_load:
-                print(success, info)
+            message_body, message_id = self.queue.get()
+
+            metadata = dict(metadata=dict(_id=message_id))
+
+            self.queue.task_done()
+
+            self.index_document(message_body, message_id)
+
+        # prepared_document = self._prepare_bulk_doc(message_body, **metadata)
+
+        # yield prepared_document
+
+        # bulk_load = helpers.streaming_bulk(self.es,
+        #                                    generator(),
+        #                                    int(getenv('ELASTIC_BULK_CHUNK_SIZE', 10)),
+        #                                    yield_ok=False,
+        #                                    max_retries=5,
+        #                                    request_timeout=240)
+        #
+        # while True:
+        #     for success, info in bulk_load:
+        #         print(success, info)
 
     def index_document(self, document_body, id=None):
         document_body['@timestamp'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
