@@ -1,11 +1,12 @@
 from elasticsearch import Elasticsearch, ElasticsearchException, NotFoundError, helpers
 from datetime import datetime
-from json import load
+from json import load, dumps
 from threading import Thread
 from queue import Queue
 from os import getenv
 
 from config import BASE_PATH
+from app.tools.logger import log
 
 
 class ElasticDailyIndexManager(Thread):
@@ -15,7 +16,7 @@ class ElasticDailyIndexManager(Thread):
         es_port = 9200 if ElasticDailyIndexManager.str_to_bool(getenv("RUNNING_IN_CONTAINER", "False")) else 9202
         es_url = "elastic" if ElasticDailyIndexManager.str_to_bool(getenv("RUNNING_IN_CONTAINER", "False")) else "localhost"
 
-        self.es = Elasticsearch(hosts=[es_url], port=es_port)
+        self.es = Elasticsearch(hosts=[es_url], port=es_port, retry_on_timeout=True)
 
         self.index_template_name = index_basename
         self.index_name_mask = index_basename if index_basename.endswith("-") else index_basename + "-"
@@ -26,34 +27,38 @@ class ElasticDailyIndexManager(Thread):
         self.queue = Queue()
         self.daemon = True
 
+        self.failures = 0
+
         self.start()
 
     def run(self):
         # def generator():
 
-        while True:
-            message_body, message_id = self.queue.get()
+            while True:
+                message_body, message_id = self.queue.get()
 
-            metadata = dict(metadata=dict(_id=message_id))
+                metadata = dict(metadata=dict(_id=message_id))
 
-            self.queue.task_done()
+                self.queue.task_done()
 
-            self.index_document(message_body, message_id)
+                self.index_document(message_body, message_id)
 
-        # prepared_document = self._prepare_bulk_doc(message_body, **metadata)
-
-        # yield prepared_document
-
+        #         prepared_document = self._prepare_bulk_doc(message_body, **metadata)
+        #
+        #         yield prepared_document
+        #
         # bulk_load = helpers.streaming_bulk(self.es,
         #                                    generator(),
         #                                    int(getenv('ELASTIC_BULK_CHUNK_SIZE', 10)),
         #                                    yield_ok=False,
         #                                    max_retries=5,
-        #                                    request_timeout=240)
+        #                                    initial_backoff=30,
+        #                                    max_backoff=90,
+        #                                    request_timeout=120)
         #
         # while True:
         #     for success, info in bulk_load:
-        #         print(success, info)
+        #        log.log_warning('ERROR ON BULK',success, info)
 
     def index_document(self, document_body, id=None):
         document_body['@timestamp'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
@@ -62,9 +67,15 @@ class ElasticDailyIndexManager(Thread):
             self.es.index(index=self.index_name_mask + datetime.utcnow().strftime('%Y.%m.%d'),
                           doc_type='default',
                           body=document_body,
-                          id=id)
+                          id=id,
+                          timeout="30s"
+                          )
         except ElasticsearchException as e:
-            print(document_body, id, e.args)
+            self.failures += 1
+            log.log_error("Failure no {} on single index action. ID: {} \n Error: {} \n Document: {}".format(id,
+                                                                                                            self.failures,
+                                                                                                            e.args,
+                                                                                                            dumps(document_body)))
 
     def _register_index_template(self):
         template_body = self._get_json_file_content("{}/config/index_templates/{}.json".format(BASE_PATH,
