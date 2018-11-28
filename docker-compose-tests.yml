@@ -4,48 +4,56 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    restart: always
     networks:
-      - pw-bd-net
+      - pw-bd-net-test
     volumes:
       - .:/app/
-    command: sh -c "./wait-for-it.sh -t 60 elastic:9200 && python3 ./app/gcp_pubsub/subscribers/main.py --project-id ${PROJECT_ID} --topic ${TOPIC_NAME} --seconds 60"
+    command: sh -c "./wait-for-it.sh -t 60 elastic_test:9200 && python3 ./app/gcp_pubsub/subscribers/main.py --project-id ${PROJECT_ID}-test --topic ${TOPIC_NAME} --seconds 60"
     environment:
       - ELASTIC_BULK_CHUNK_SIZE=1000
   publish_test_data:
     build:
       context: .
       dockerfile: Dockerfile
-    restart: always
     networks:
-    - pw-bd-net
+    - pw-bd-net-test
     volumes:
     - .:/app/
-    command: sh -c "python3 ./app/gcp_pubsub/publish.py --project-id ${PROJECT_ID} --topic ${TOPIC_NAME} --amount 100000"
-  elastic:
+    command: sh -c "python3 ./app/gcp_pubsub/publish.py --project-id ${PROJECT_ID}-test --topic ${TOPIC_NAME} --amount 100000"
+  elastic_test:
     build:
       context: ./resources/elasticsearch
       dockerfile: Dockerfile
+    hostname: elastic
     restart: always
     networks:
-      - pw-bd-net
+      - pw-bd-net-test
     ports:
-      - "9201:9200"
+      - "9203:9200"
+    environment:
+      - cluster.name=test
+      - node.name=master
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms6g -Xmx6g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
   kibana:
     image: docker.elastic.co/kibana/kibana:6.5.0
     restart: always
     networks:
-      - pw-bd-net
+      - pw-bd-net-test
     ports:
-      - "5602:5601"
+      - "5603:5601"
     volumes:
       - ./resources/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
 
 networks:
-  pw-bd-net:
+  pw-bd-net-test:
     driver: bridge
     ipam:
       driver: default
       config:
-        - subnet: 171.15.238.0/24
-          gateway: 171.15.238.1
+        - subnet: 171.17.238.0/24
+          gateway: 171.17.238.1
