@@ -1,10 +1,10 @@
-PROJECT_NAME=pw-bd-project
+PROJECT_NAME?=pw-bd-project
+PROJECT_SCOPE?=meetup
+
 SA_NAME=pubsub-all-meetup
 
 ELASTICSEARCH_URL=localhost
 ELASTICSEARCH_PORT=9202
-
-PROTOBUF_SCHEMA?=meetup_rawdata
 
 SSH_KEY='/home/mgorski/Dokumenty/keys/ovh/id_rsa'
 
@@ -16,6 +16,8 @@ project-setup:
 	# project setup
 	gcloud projects create ${PROJECT_NAME}
 	gcloud config set project ${PROJECT_NAME}
+
+	read -n 1 -s -r -p "Enable billing on this project through Google Console and press any key to continue..."
 
 accounts-setup:
 	gcloud config set project ${PROJECT_NAME}
@@ -36,22 +38,25 @@ accounts-setup:
 keys-generate:
 	gcloud config set project ${PROJECT_NAME}
 
-	rm -f ./config/keys/gcp/key.json
+	rm -f ./config/keys/${PROJECT_NAME}/*
+	mkdir -p ./config/keys/${PROJECT_NAME}/
 
 	# keys generation
 	gcloud iam service-accounts keys create \
-		./config/keys/gcp/key.json \
+		./config/keys/${PROJECT_NAME}/key.json \
 		--iam-account ${SA_NAME}@${PROJECT_NAME}.iam.gserviceaccount.com
 
 pubsub-setup:
+	sleep 60
+
 	gcloud config set project ${PROJECT_NAME}
 
 	# pubsub setup
-	gcloud pubsub topics create meetup-rawdata
-	gcloud pubsub topics create meetup-notify
+	gcloud pubsub topics create ${PROJECT_SCOPE}-rawdata
+	gcloud pubsub topics create ${PROJECT_SCOPE}-notify
 
-	gcloud pubsub subscriptions create meetup-rawdata-subscription-elastic --topic meetup-rawdata
-	gcloud pubsub subscriptions create meetup-rawdata-subscription-streaming --topic meetup-rawdata
+	gcloud pubsub subscriptions create ${PROJECT_SCOPE}-rawdata-subscription-elastic --topic ${PROJECT_SCOPE}-rawdata
+	gcloud pubsub subscriptions create ${PROJECT_SCOPE}-rawdata-subscription-streaming --topic ${PROJECT_SCOPE}-rawdata
 
 function-register:
 	gcloud config set project ${PROJECT_NAME}
@@ -61,9 +66,12 @@ function-register:
 		--env-vars-file ./app/gcp_functions/pushover_notify/.env.yml \
 		--source ./app/gcp_functions/pushover_notify \
 		--runtime python37 \
-		--trigger-topic meetup-notify
+		--trigger-topic ${PROJECT_SCOPE}-notify
 
-setup-gcp-env: project-setup accounts-setup keys-generate pubsub-setup function-register
+backup-storage-create:
+	gsutil mb -c regional -l us-west1 -p ${PROJECT_NAME} gs://${PROJECT_NAME}-${PROJECT_SCOPE}-elasticsearch-backup
+
+setup-gcp-env: project-setup accounts-setup keys-generate pubsub-setup function-register backup-storage-create
 
 setup-elk-env:
 	docker-compose build
@@ -98,7 +106,7 @@ compile-pyrobuf-lib:
 
 	cd ./tmp/pyrobuf; \
 	python3 -m pyrobuf \
-		--install ../../resources/protobuf/${PROTOBUF_SCHEMA}.proto \
+		--install ../../resources/protobuf/${PROJECT_SCOPE}_rawdata.proto \
 		--package message_proto; \
 	cd ../../; \
 	rm -frd tmp/pyrobuf

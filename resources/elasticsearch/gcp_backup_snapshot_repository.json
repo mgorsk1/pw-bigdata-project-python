@@ -1,6 +1,6 @@
 {
   "type": "gcs",
   "settings": {
-    "bucket": "elasticsearch-meetup-backup"
+    "bucket": "pw-bd-project-meetup-elasticsearch-backup"
   }
 }

@@ -10,8 +10,6 @@ from message_proto import MSG
 from config import BASE_PATH
 from app.tools.logger import log
 
-environ['GOOGLE_APPLICATION_CREDENTIALS'] = "{}/config/keys/gcp/key.json".format(BASE_PATH)
-
 
 class ProcessFutures(Thread):
     def __init__(self, futures_queue):
@@ -47,6 +45,8 @@ class PubSubPublisher:
 
     """
     def __init__(self, project_id, topic_name):
+        environ['GOOGLE_APPLICATION_CREDENTIALS'] = "{}/config/keys/{}/key.json".format(BASE_PATH, project_id)
+
         self.client = pubsub_v1.PublisherClient()
 
         self.project_id = project_id

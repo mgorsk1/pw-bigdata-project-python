@@ -8,8 +8,6 @@ from config import BASE_PATH
 from app.tools.logger import log
 from app.elasticsearch.client import ElasticDailyIndexManager
 
-environ['GOOGLE_APPLICATION_CREDENTIALS'] = "{}/config/keys/gcp/key.json".format(BASE_PATH)
-
 
 class BaseSubscriber(Thread):
     """Base class responsible for reading raw data from pub/sub subscription and indexing it into Elasticsearch.
@@ -28,6 +26,8 @@ class BaseSubscriber(Thread):
     """
 
     def __init__(self, project_id_arg, topic_name_arg, seconds_arg=None, **kwargs):
+        environ['GOOGLE_APPLICATION_CREDENTIALS'] = "{}/config/keys/{}}/key.json".format(BASE_PATH, project_id)
+
         Thread.__init__(self)
 
         self.elastic_managers = environ.get("ElASTIC_MANAGERS", 1)
