@@ -26,7 +26,7 @@ class BaseSubscriber(Thread):
     """
 
     def __init__(self, project_id_arg, topic_name_arg, seconds_arg=None, **kwargs):
-        environ['GOOGLE_APPLICATION_CREDENTIALS'] = "{}/config/keys/{}}/key.json".format(BASE_PATH, project_id)
+        environ['GOOGLE_APPLICATION_CREDENTIALS'] = "{}/config/keys/{}/key.json".format(BASE_PATH, project_id_arg)
 
         Thread.__init__(self)
 
