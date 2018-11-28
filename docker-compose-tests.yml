@@ -24,10 +24,11 @@ services:
     build:
       context: ./resources/elasticsearch
       dockerfile: Dockerfile
-    hostname: elastic
     restart: always
     networks:
       - pw-bd-net-test
+        aliases:
+          - elastic
     ports:
       - "9203:9200"
     environment:
