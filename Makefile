@@ -82,7 +82,7 @@ setup-elk-env:
 		echo "---------- Waiting for Elasticsearch to start... ----------" && sleep 1;\
 	done
 
-	docker exec -it pw-bd-project_elastic_1 ./bin/elasticsearch-keystore add-file gcs.client.default.credentials_file /app/key.json
+	docker exec -it pw-bd-project-python_elastic_1 ./bin/elasticsearch-keystore add-file gcs.client.default.credentials_file /app/key.json
 
     # change elastic config
 	curl -X POST 'http://${ELASTICSEARCH_URL}:${ELASTICSEARCH_PORT}/_nodes/reload_secure_settings'
