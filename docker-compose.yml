@@ -51,6 +51,17 @@ services:
       - "5602:5601"
     volumes:
       - ./resources/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
+  spark_streaming:
+    image: pw-bd-project-scala_spark:latest
+    restart: always
+    networks:
+      - pw-bd-net
+    depends_on:
+      - acquire_rawdata
+    ports:
+      - '8889:8888'
+      - '4042:4040'
+    command: "sh run.sh"
 
 networks:
   pw-bd-net:

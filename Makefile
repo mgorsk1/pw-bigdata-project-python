@@ -95,7 +95,7 @@ setup-elk-env:
 	 -H 'Content-Type: application/json' \
 	 -d '{"persistent" : {"cluster.routing.allocation.disk.threshold_enabled": false}}'
 
-	docker-compose up -d index_rawdata acquire_rawdata
+	docker-compose up -d index_rawdata acquire_rawdata spark_streaming
 
 teardown-elk-env:
 	docker rm -f $$(docker ps -aq --filter "label=com.gorskimariusz.project=pw-bd-project")
