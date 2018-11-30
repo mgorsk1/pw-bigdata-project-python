@@ -16,7 +16,7 @@ class ElasticDailyIndexManager(Thread):
         es_port = 9200 if ElasticDailyIndexManager.str_to_bool(getenv("RUNNING_IN_CONTAINER", "False")) else 9202
         es_url = "elastic" if ElasticDailyIndexManager.str_to_bool(getenv("RUNNING_IN_CONTAINER", "False")) else "localhost"
 
-        self.es = Elasticsearch(hosts=[es_url], port=es_port, retry_on_timeout=True)
+        self.es = Elasticsearch(hosts=[es_url], port=es_port, retry_on_timeout=True, request_timeout="30s")
 
         self.index_template_name = index_basename
         self.index_name_mask = index_basename if index_basename.endswith("-") else index_basename + "-"
@@ -70,7 +70,7 @@ class ElasticDailyIndexManager(Thread):
                           id=id,
                           timeout="30s"
                           )
-        except ElasticsearchException as e:
+        except Exception as e:
             self.failures += 1
             log.log_error("Failure no {} on single index action. ID: {} \n Error: {} \n Document: {}".format(id,
                                                                                                             self.failures,
