@@ -30,6 +30,16 @@
           }
         },
         {
+          "date_by_name_timestamp": {
+            "match_mapping_type": "double",
+            "match":   "timestamp",
+            "mapping": {
+              "type": "date",
+              "format": "yyyy-MM-dd HH:mm:ss||epoch_millis"
+            }
+          }
+        },
+        {
           "geo_by_name": {
             "match_mapping_type": "string",
             "match":   "*_geo",
