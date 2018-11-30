@@ -10,7 +10,7 @@ SSH_KEY='/home/mgorski/Dokumenty/keys/ovh/id_rsa'
 
 MASTER_HOST='10.112.112.11'
 MASTER_USER='mgorski'
-MASTER_DIR='/home/mgorski/pw-bd-project/'
+MASTER_DIR='/home/mgorski/pw-bd-project-python/'
 
 project-setup:
 	# project setup
