@@ -41,7 +41,7 @@ services:
         soft: -1
         hard: -1
   kibana:
-    image: docker.elastic.co/kibana/kibana:6.5.0
+    image: docker.elastic.co/kibana/kibana:6.5.1
     restart: always
     networks:
       - pw-bd-net-test
