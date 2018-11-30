@@ -15,9 +15,12 @@ class ThreadsManager:
 
     def run(self, threads_number):
         if self.seconds:
-            log.log_info("{} - Running for {} seconds".format(self.__class__.__name__, self.seconds))
+            log.log_info("{} - Running {} threads for {} seconds".format(self.__class__.__name__,
+                                                                         threads_number,
+                                                                         self.seconds))
         else:
-            log.log_info("{} - Running forever".format(self.__class__.__name__))
+            log.log_info("{} - Running {} threads forever".format(self.__class__.__name__,
+                                                                  threads_number))
 
         for i in range(threads_number):
             self.threads.append(self.thread(self.project, self.topic, self.seconds))
