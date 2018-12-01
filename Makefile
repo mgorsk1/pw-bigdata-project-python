@@ -100,6 +100,8 @@ setup-elk-env:
 teardown-elk-env:
 	docker rm -f $$(docker ps -aq --filter "label=com.gorskimariusz.project=pw-bd-project")
 
+	docker volume rm pw-bd-project-python_esdata
+
 compile-pyrobuf-lib:
 	pip3 uninstall -y pyrobuf-generated
 	mkdir -p tmp/pyrobuf
