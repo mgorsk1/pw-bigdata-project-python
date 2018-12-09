@@ -35,7 +35,7 @@ services:
       - cluster.name=pw-bd-project
       - node.name=master
       - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xms6g -Xmx6g"
+      - "ES_JAVA_OPTS=-Xms10g -Xmx10g"
     ulimits:
       memlock:
         soft: -1
