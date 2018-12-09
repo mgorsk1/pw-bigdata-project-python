@@ -23,6 +23,12 @@
       "time":1541723400000,
       "event_url":"https:\/\/www.meetup.com\/linuxaustin\/events\/255163013\/"
    },
+   "venue": {
+      "venue_name": "GoMadrid",
+      "lon": -3.705322,
+      "lat": 40.4201,
+      "venue_id": 25615553
+    },
    "group":{
       "group_topics":[
          {
