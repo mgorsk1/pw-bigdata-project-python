@@ -3,7 +3,7 @@ MAINTAINER gorskimariusz13@gmail.com
 
 LABEL "com.gorskimariusz.project"="pw-bd-project"
 
-RUN yum install curl
+RUN yum install -y curl
 
 # Set the working directory
 RUN mkdir /app
