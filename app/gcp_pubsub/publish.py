@@ -56,14 +56,14 @@ class PubSubPublisher:
         self.futures_queue = Queue()
         self.future_process = ProcessFutures(self.futures_queue)
 
+        self.topic_path = self.client.topic_path(self.project_id, self.topic_name)
+
     def publish_message(self, message_body):
         """
         Publishes message to a Pub/Sub topic.
 
         future.result is verified in separate thread to avoid blocking of message publishing.
         """
-
-        topic_path = self.client.topic_path(self.project_id, self.topic_name)
 
         if isinstance(message_body, dict):
             message_str = dumps(message_body)
@@ -82,7 +82,7 @@ class PubSubPublisher:
 
         pb_message_serialized = pb_message.SerializeToString()
 
-        future = self.client.publish(topic_path, data=pb_message_serialized)
+        future = self.client.publish(self.topic_path, data=pb_message_serialized)
 
         self.futures_queue.put(future)
 
@@ -116,6 +116,8 @@ def run(project_id, topic, amount):
 
     mockup_data = DictFromTemplate(topic).generate()
 
+    msg_size = dumps(mockup_data).encode().__len__()
+
     time_start = time()
 
     for i in range(amount):
@@ -128,11 +130,10 @@ def run(project_id, topic, amount):
 
     seconds = time_stop - time_start
 
-    log.log_warning("Published {} messages in {:.2f} seconds. That is {:.2f} mps!".format(amount,
+    log.log_warning("Published {} messages in {:.2f} seconds. That is {:.2f} m/s & {:.2f} MB/s!".format(amount,
                                                                                           seconds,
-                                                                                          amount / seconds))
-
-    print()
+                                                                                          amount / seconds,
+                                                                                          amount * msg_size / (seconds * 1024 * 1024)))
 
 
 if __name__ == '__main__':
