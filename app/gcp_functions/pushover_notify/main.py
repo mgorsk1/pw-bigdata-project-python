@@ -40,7 +40,7 @@ def pushover_notify(data, context):
         request_data = dict(token=config.get("APP_TOKEN", ""),
                             user=config.get("USER_KEY", ""),
                             message=message,
-                            device="gcp-funct-pushover_notify",
+                            device="pw-bd-project-funct-pushover_notify",
                             title=title,
                             url=url)
 

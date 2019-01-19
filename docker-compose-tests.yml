@@ -16,9 +16,9 @@ services:
       context: .
       dockerfile: Dockerfile
     networks:
-    - pw-bd-net-test
+      - pw-bd-net-test
     volumes:
-    - .:/app/
+      - .:/app/
     command: sh -c "python3 ./app/gcp_pubsub/publish.py --project-id ${PROJECT_ID}-test --topic ${TOPIC_NAME} --amount 100000"
   elastic_test:
     build:
@@ -60,7 +60,7 @@ services:
       - '8888:8888'
       - '4040:4040'
     volumes:
-      - ./resources/notebooks/:/home/jovyan
+      - ./resources/notebooks/:/home/jovyan/work
 networks:
   pw-bd-net-test:
     driver: bridge

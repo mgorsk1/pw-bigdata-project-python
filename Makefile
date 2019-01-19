@@ -71,6 +71,17 @@ function-register:
 backup-storage-create:
 	gsutil mb -c regional -l us-west1 -p ${PROJECT_NAME} gs://${PROJECT_NAME}-${PROJECT_SCOPE}-elasticsearch-backup
 
+rawdata-storage-create:
+	gsutil mb -c regional -l us-west1 -p ${PROJECT_NAME} gs://${PROJECT_NAME}-${PROJECT_SCOPE}-elasticsearch-rawdata
+
+rawdata-storage-populate:
+	mkdir -p ./tmp/meetup-rawdata-dump/ > /dev/null &
+
+	for i in $$(curl -X GET http://${MASTER_HOST}:9202/_cat/indices?&index=meetup-rawdata*&h=index&s=index; \
+		do elasticdump --input=http://${MASTER_HOST}:9202/$i --output=./tmp/meetup-rawdata-dump/$$i.json --sourceOnly --limit=10000; \
+		gsutil cp ./tmp/meetup-rawdata-dump/$$i.json gs://${PROJECT_NAME}-${PROJECT_SCOPE}-elasticsearch-rawdata/; \
+	done
+
 setup-gcp-env: project-setup accounts-setup keys-generate pubsub-setup function-register backup-storage-create
 
 setup-elk-env:
