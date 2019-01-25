@@ -130,7 +130,7 @@ def run(project_id, topic, amount):
 
     seconds = time_stop - time_start
 
-    log.log_warning("Published {} messages in {:.2f} seconds. That is {:.2f} m/s & {:.2f} MB/s!".format(amount,
+    log.log_info("Published {} messages in {:.2f} seconds. That is {:.2f} m/s & {:.2f} MB/s!".format(amount,
                                                                                           seconds,
                                                                                           amount / seconds,
                                                                                           amount * msg_size / (seconds * 1024 * 1024)))
