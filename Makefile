@@ -127,6 +127,32 @@ compile-pyrobuf-lib:
 run-socket-reader:
 	python3 ./app/socket_reader/main.py
 
+dump-rawdata-to-local:
+	mkdir -p ./tmp/rawdata/${PROJECT_SCOPE}
+	for i in $(curl -X GET 'http://${MASTER_HOST}:${ELASTICSEARCH_PORT}/_cat/indices?&h=index&s=index&index=${PROJECT_SCOPE}-rawdata*'); do elasticdump --limit 10000 --input=http://10.112.112.11:9202/$i --output ./tmp/rawdata/${PROJECT_SCOPE}/$i.json --type=data --sourceOnly; done
+
+send-rawdata-to-gcp:
+	gsutil cp ./tmp/rawdata/${PROJECT_SCOPE}/*.json gs://${PROJECT_NAME}-${PROJECT_SCOPE}-rawdata
+
+deploy-gcp-dataproc:
+	gcloud dataproc clusters create ${PROJECT_NAME}-${PROJECT_SCOPE}-analytics \
+		--subnet default \
+		--zone us-west1-a \i
+		--master-machine-type n1-standard-8 \
+		--master-boot-disk-size 100 \
+		--num-workers 2 \
+		--worker-machine-type n1-standard-8 \
+		--worker-boot-disk-size 150 \
+		--image-version 1.3-deb9 \
+		--project ${PROJECT_NAME} \
+		--initialization-actions 'gs://dataproc-initialization-actions/jupyter/jupyter.sh' \
+		--metadata "JUPYTER_CONDA_PACKAGES=numpy:scipy:pandas:plotly" \
+		--properties spark:spark.executorEnv.PYTHONHASHSEED=0,spark:spark.yarn.am.memory=1024m
+
+remove-gcp-dataproc:
+	gcloud config set project ${PROJECT_NAME}
+	gcloud dataproc clusters delete ${PROJECT_NAME}-${PROJECT_SCOPE}-analytics
+
 sync-repo:
 	rsync -avh --chmod=0755 --progress --cvs-exclude --include '.env' --exclude '__pycache__' --exclude 'tmp' --exclude '.docker' --exclude 'venv' --exclude 'tests' --exclude '.vscode' --exclude='*.pyc' --exclude 'log' --exclude 'jar' --exclude '.idea' -e "ssh -i $(SSH_KEY)" ./* ${MASTER_USER}@$(MASTER_HOST):$(MASTER_DIR)/${PROJECT_FOLDER}
 
