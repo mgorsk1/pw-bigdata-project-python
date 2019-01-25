@@ -137,7 +137,7 @@ send-rawdata-to-gcp:
 deploy-gcp-dataproc:
 	gcloud dataproc clusters create ${PROJECT_NAME}-${PROJECT_SCOPE}-analytics \
 		--subnet default \
-		--zone us-west1-a \i
+		--zone us-west1-a \
 		--master-machine-type n1-standard-8 \
 		--master-boot-disk-size 100 \
 		--num-workers 2 \
