@@ -47,16 +47,17 @@ keys-generate:
 		--iam-account ${SA_NAME}@${PROJECT_NAME}.iam.gserviceaccount.com
 
 pubsub-setup:
-	sleep 60
-
 	gcloud config set project ${PROJECT_NAME}
 
 	# pubsub setup
 	gcloud pubsub topics create ${PROJECT_SCOPE}-rawdata
 	gcloud pubsub topics create ${PROJECT_SCOPE}-notify
 
-	gcloud pubsub subscriptions create ${PROJECT_SCOPE}-rawdata-subscription-elastic --topic ${PROJECT_SCOPE}-rawdata
-	gcloud pubsub subscriptions create ${PROJECT_SCOPE}-rawdata-subscription-streaming --topic ${PROJECT_SCOPE}-rawdata
+	gcloud pubsub subscriptions create ${PROJECT_SCOPE}-rawdata-subscription-elastic \
+		--topic ${PROJECT_SCOPE}-rawdata
+
+	gcloud pubsub subscriptions create ${PROJECT_SCOPE}-rawdata-subscription-streaming \
+		--topic ${PROJECT_SCOPE}-rawdata
 
 function-register:
 	gcloud config set project ${PROJECT_NAME}
@@ -69,10 +70,18 @@ function-register:
 		--trigger-topic ${PROJECT_SCOPE}-notify
 
 backup-storage-create:
-	gsutil mb -c regional -l us-west1 -p ${PROJECT_NAME} gs://${PROJECT_NAME}-${PROJECT_SCOPE}-elasticsearch-backup
+	gsutil mb \
+		-c regional \
+		-l us-west1 \
+		-p ${PROJECT_NAME} \
+		gs://${PROJECT_NAME}-${PROJECT_SCOPE}-elasticsearch-backup
 
 rawdata-storage-create:
-	gsutil mb -c regional -l us-west1 -p ${PROJECT_NAME} gs://${PROJECT_NAME}-${PROJECT_SCOPE}-elasticsearch-rawdata
+	gsutil mb \
+		-c regional \
+		-l us-west1 \
+		-p ${PROJECT_NAME} \
+		gs://${PROJECT_NAME}-${PROJECT_SCOPE}-elasticsearch-rawdata
 
 rawdata-storage-populate:
 	mkdir -p ./tmp/meetup-rawdata-dump/ > /dev/null &
@@ -129,7 +138,14 @@ run-socket-reader:
 
 dump-rawdata-to-local:
 	mkdir -p ./tmp/rawdata/${PROJECT_SCOPE}
-	for i in $(curl -X GET 'http://${MASTER_HOST}:${ELASTICSEARCH_PORT}/_cat/indices?&h=index&s=index&index=${PROJECT_SCOPE}-rawdata*'); do elasticdump --limit 10000 --input=http://10.112.112.11:9202/$i --output ./tmp/rawdata/${PROJECT_SCOPE}/$i.json --type=data --sourceOnly; done
+	for i in $(curl -X GET 'http://${MASTER_HOST}:${ELASTICSEARCH_PORT}/_cat/indices?&h=index&s=index&index=${PROJECT_SCOPE}-rawdata*'); \
+		do elasticdump \
+			--limit 10000 \
+			--input=http://10.112.112.11:9202/$i \
+			--output ./tmp/rawdata/${PROJECT_SCOPE}/$i.json \
+			--type=data \
+	 		--sourceOnly; \
+	done
 
 send-rawdata-to-gcp:
 	gsutil cp ./tmp/rawdata/${PROJECT_SCOPE}/*.json gs://${PROJECT_NAME}-${PROJECT_SCOPE}-rawdata
@@ -145,7 +161,7 @@ deploy-gcp-dataproc:
 		--worker-boot-disk-size 150 \
 		--image-version 1.3-deb9 \
 		--project ${PROJECT_NAME} \
-		--initialization-actions 'gs://dataproc-initialization-actions/jupyter/jupyter.sh' \
+		--initialization-actions gs://dataproc-initialization-actions/jupyter/jupyter.sh \
 		--metadata "JUPYTER_CONDA_PACKAGES=numpy:scipy:pandas:plotly" \
 		--properties spark:spark.executorEnv.PYTHONHASHSEED=0,spark:spark.yarn.am.memory=1024m
 
