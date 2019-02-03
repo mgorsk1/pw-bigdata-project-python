@@ -7,9 +7,6 @@
       "other_services":{
          "twitter":{
             "identifier":"@coderDx"
-         },
-         "facebook":{
-            "identifier":"https:\/\/www.facebook.com\/app_scoped_user_id\/1069231963\/"
          }
       },
       "photo":"https:\/\/secure.meetupstatic.com\/photos\/member\/c\/c\/3\/0\/thumb_32152272.jpeg",
@@ -38,34 +35,6 @@
          {
             "urlkey":"virtualization",
             "topic_name":"Virtualization"
-         },
-         {
-            "urlkey":"sysadmin",
-            "topic_name":"System Administration"
-         },
-         {
-            "urlkey":"linux",
-            "topic_name":"Linux"
-         },
-         {
-            "urlkey":"php",
-            "topic_name":"PHP"
-         },
-         {
-            "urlkey":"mysql",
-            "topic_name":"MySQL"
-         },
-         {
-            "urlkey":"apache",
-            "topic_name":"Apache"
-         },
-         {
-            "urlkey":"devops",
-            "topic_name":"DevOps"
-         },
-         {
-            "urlkey":"computer-programming",
-            "topic_name":"Computer programming"
          }
       ],
       "group_city":"Austin",
