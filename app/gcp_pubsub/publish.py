@@ -11,29 +11,6 @@ from config import BASE_PATH
 from app.tools.logger import log
 
 
-class ProcessFutures(Thread):
-    def __init__(self, futures_queue):
-        Thread.__init__(self)
-
-        self.queue = futures_queue
-
-        self.counter = 0
-
-        self.results = list()
-
-        self.daemon = True
-
-        self.start()
-
-    def run(self):
-        while getattr(self, 'keep_going', True):
-            future = self.queue.get()
-
-            self.results.append(future.result())
-
-            self.queue.task_done()
-
-
 class PubSubPublisher:
     """Class responsible for publishing messages to GCP Pub/Sub topic.
 
@@ -52,9 +29,7 @@ class PubSubPublisher:
         self.project_id = project_id
         self.topic_name = topic_name
 
-        self.keep_going = True
-        self.futures_queue = Queue()
-        self.future_process = ProcessFutures(self.futures_queue)
+        self.results_counter = 0
 
         self.topic_path = self.client.topic_path(self.project_id, self.topic_name)
 
@@ -84,16 +59,23 @@ class PubSubPublisher:
 
         future = self.client.publish(self.topic_path, data=pb_message_serialized)
 
-        self.futures_queue.put(future)
+        future.add_done_callback(PubSubPublisher.callback)
+
+        self.results_counter += 1
 
         return True
 
     def finish(self):
-        self.future_process.queue.join()
-
         log.log_info("{} - Processed results: {}".format(self.__class__.__name__,
-                                                         str(len(self.future_process.results))))
+                                                         self.results_counter))
 
+    @staticmethod
+    def callback(message_future):
+        if message_future.exception():
+            log.log_warning('Publishing message on {} threw an Exception {}.'.format(topic_name,
+                                                                                     message_future.exception()))
+        else:
+            pass
 
 @click.command()
 @click.option('--project-id', required=True, type=str, help='Google Cloud Platform Project Id')
@@ -121,8 +103,7 @@ def run(project_id, topic, amount):
     time_start = time()
 
     for i in range(amount):
-        message_body = mockup_data
-        psp.publish_message(message_body)
+        psp.publish_message(mockup_data)
 
     psp.finish()
 
