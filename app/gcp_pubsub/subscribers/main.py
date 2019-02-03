@@ -1,7 +1,7 @@
 import click
 
 from app.tools.threads_manager import ThreadsManager
-from app.gcp_pubsub.subscribers.meetup import MeetupRsvpSubscriber
+from app.gcp_pubsub.subscribers.base import BaseSubscriber
 
 
 @click.command()
@@ -10,7 +10,7 @@ from app.gcp_pubsub.subscribers.meetup import MeetupRsvpSubscriber
 @click.option('--seconds', default=None, required=False, type=int, help='For how long to read messages. If not provided - run forever')
 @click.option('--subscribers', default=1, type=int, help="Number of concurrent threads to read from subscription")
 def run(project_id, topic, seconds, subscribers):
-    manager = ThreadsManager(MeetupRsvpSubscriber, project_id, topic, seconds)
+    manager = ThreadsManager(BaseSubscriber, project_id, topic, seconds)
     manager.run(subscribers)
 
 
