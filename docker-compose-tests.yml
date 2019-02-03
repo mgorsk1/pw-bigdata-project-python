@@ -8,7 +8,7 @@ services:
       - pw-bd-net-test
     volumes:
       - .:/app/
-    command: sh -c "./wait-for-it.sh -t 60 elastic_test:9200 && python3 ./app/gcp_pubsub/subscribers/main.py --project-id ${PROJECT_ID}-test --topic ${TOPIC_NAME} --seconds 60"
+    command: sh -c "python3 ./app/gcp_pubsub/subscribers/main.py --project-id ${PROJECT_ID}-test --topic ${TOPIC_NAME} --seconds 60"
     environment:
       - ELASTIC_BULK_CHUNK_SIZE=1000
   publish_test_data:
